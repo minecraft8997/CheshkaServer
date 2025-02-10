@@ -188,7 +188,7 @@ public class Board {
             lastCalculatedDestination = newPosition;
 
             for (Piece aPiece : pieces) {
-                if (aPiece.position == newPosition) {
+                if (aPiece.position == newPosition || (newPosition == whitesDiagonalStart && aPiece.position == 0)) {
                     if (i != digit) return false;
 
                     return aPiece.whitePiece != whitesTurn;
