@@ -64,7 +64,7 @@ public class Board {
             }
             if (target != null) pieces.remove(target);
 
-            if (piece == null) {
+            if (isSpawningMove()) {
                 Piece piece = new Piece(whitesTurn);
                 piece.setPosition(getSpawnPosition());
 
@@ -72,6 +72,10 @@ public class Board {
             } else {
                 piece.setPosition(destination);
             }
+        }
+
+        public boolean isSpawningMove() {
+            return piece == null;
         }
 
         public Piece getPiece() {
@@ -155,6 +159,15 @@ public class Board {
     private boolean isMovePossible(Piece piece, int digit) {
         if (piece == null) {
             if (digit != 6) return false;
+
+            int pieceCount = 0;
+            for (Piece aPiece : pieces) {
+                if (aPiece.whitePiece == whitesTurn) {
+                    pieceCount++;
+
+                    if (pieceCount >= diagonalLength) return false;
+                }
+            }
 
             for (Piece aPiece : pieces) {
                 if (aPiece.position == getSpawnPosition() || (whitesTurn && aPiece.position == whitesDiagonalStart)) {

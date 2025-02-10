@@ -6,6 +6,7 @@ import ru.deewend.cheshka.server.annotation.Serverbound;
 @Serverbound
 public class ClientHello extends Packet {
     public int magic;
+    public int clientVersionCode;
     public byte protocolVersion;
     public String serverAddress;
     public int serverPort;

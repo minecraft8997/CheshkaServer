@@ -37,11 +37,15 @@ public class GameRoom {
                 .replace("666", "545"); // replace inappropriate codes
 
         this.hostColor = random.nextBoolean();
-        this.board = new Board();
+        this.board = new Board(cheshkaServer.getRandom(), CheshkaServer.BOARD_SIZE);
 
         if (this.hostColor) {
             this.whoMakesAMove = hostPlayerHandler;
         }
+    }
+
+    public boolean tick() {
+        return true;
     }
 
     public synchronized boolean checkAndDoMove(ClientHandler handler, String san) {

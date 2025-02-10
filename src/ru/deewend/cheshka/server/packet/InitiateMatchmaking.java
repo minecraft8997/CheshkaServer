@@ -6,6 +6,10 @@ import ru.deewend.cheshka.server.annotation.Serverbound;
 
 @Serverbound
 public class InitiateMatchmaking extends Packet {
+    public static final byte MODE_ACCEPT_INVITE = 0;
+    public static final byte MODE_CREATE_INVITE = 1;
+    public static final byte MODE_RANDOM_OPPONENT = 2;
+
     public byte mode;
     @OnlyWhen(field = "mode", is = "0")
     public String invitationCode;

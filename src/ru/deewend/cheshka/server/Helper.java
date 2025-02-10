@@ -15,6 +15,7 @@ public class Helper {
         boolean provide(T object) throws Exception;
     }
 
+    public static final int SERVER_VERSION_CODE = 1;
     public static final String DEFAULT_STRING_VALUE = "";
     public static final String NULL_UUID = "00000000-0000-0000-0000-000000000000";
     public static final UUID NULL_UUID_OBJ = UUID.fromString(NULL_UUID);
@@ -109,12 +110,6 @@ public class Helper {
         writeByteArray(stream, stream0.toByteArray());
     }
 
-    public static void sendMessageIgnoreErrors(ClientHandler handler, String message) {
-        try {
-            handler.sendMessage(message);
-        } catch (Throwable ignored) {}
-    }
-
     public static byte[] constructCachedPacket(Providable<DataOutputStream> constructor) {
         try (ByteArrayOutputStream byteStream0 = new ByteArrayOutputStream()) {
             DataOutputStream byteStream = new DataOutputStream(byteStream0);
@@ -160,5 +155,30 @@ public class Helper {
 
             return defaultValue;
         }
+    }
+
+    public static boolean validateUsername(String username) {
+        if (username == null) {
+            return false;
+        }
+        if (username.length() < 2 || username.length() > 16) {
+            return false;
+        }
+        for (int i = 0; i < username.length(); i++) {
+            char current = username.charAt(i);
+            if (current == '_' || current == '.') {
+                continue; // this is allowed
+            }
+            if (current >= '0' && current <= '9') {
+                continue; // numbers are allowed too
+            }
+            if ((current >= 'a' && current <= 'z') || (current >= 'A' && current <= 'Z')) {
+                continue; // characters from the Latin alphabet are allowed, of course
+            }
+
+            return false; // unknown character
+        }
+
+        return true;
     }
 }

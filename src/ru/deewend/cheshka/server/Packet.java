@@ -7,6 +7,8 @@ import ru.deewend.cheshka.server.packet.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.UUID;
 
 public abstract class Packet {
     @SuppressWarnings("rawtypes")
@@ -31,6 +33,8 @@ public abstract class Packet {
     private static boolean shouldContinue(
             Field field, Packet packet, Class<?> cachedClass
     ) throws NoSuchFieldException, IllegalAccessException {
+        if (Modifier.isStatic(field.getModifiers())) return true;
+
         if (cachedClass == null) {
             cachedClass = packet.getClass();
         }
@@ -61,6 +65,11 @@ public abstract class Packet {
                 field.set(packet, stream.readByte());
             } else if (type == int.class) {
                 field.set(packet, stream.readInt());
+            } else if (type == UUID.class) {
+                long most = stream.readLong();
+                long least = stream.readLong();
+
+                field.set(packet, new UUID(most, least));
             } else if (type == String.class) {
                 field.set(packet, Helper.readString(stream));
             } else {
@@ -91,6 +100,12 @@ public abstract class Packet {
                     stream.writeByte(field.getByte(this));
                 } else if (type == int.class) {
                     stream.writeInt(field.getInt(this));
+                } else if (type == UUID.class) {
+                    UUID uuid = (UUID) field.get(this);
+                    if (uuid == null) uuid = Helper.NULL_UUID_OBJ;
+
+                    stream.writeLong(uuid.getMostSignificantBits());
+                    stream.writeLong(uuid.getLeastSignificantBits());
                 } else if (type == String.class) {
                     String v = (String) field.get(this);
                     if (v == null) v = Helper.DEFAULT_STRING_VALUE;
