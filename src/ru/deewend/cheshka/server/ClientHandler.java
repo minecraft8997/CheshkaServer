@@ -77,29 +77,20 @@ public class ClientHandler implements Runnable {
         });
     }
 
-    public synchronized void tick() {
-        if (gameRoom == null && !gameRoomPacketQueue.isEmpty()) gameRoomPacketQueue.clear();
+    private boolean handleAcceptInvite(String invitationCode) {
+        cheshkaServer.accessGameRooms(gameRooms -> {
 
-        while (!packetQueue.isEmpty()) {
-            Packet packet = packetQueue.poll();
+        });
 
-            if (packet instanceof RollDice || packet instanceof MakeMove) {
-                /*
-                 * We don't have to limit gameRoomPacketQueue size, the game room will be also ticked later.
-                 */
-                if (gameRoom != null) gameRoomPacketQueue.add(packet);
+        return false;
+    }
 
-                continue;
-            }
-            if (packet instanceof InitiateMatchmaking) {
-                if (gameRoom != null || matchmaking) continue;
+    private boolean handleCreateInvite() {
+        return true;
+    }
 
-                matchmaking = true;
-
-                continue;
-            }
-            sendDisconnectAsync("Illegal state");
-        }
+    private boolean handleRandomMatchmaking() {
+        throw new UnsupportedOperationException();
     }
 
     private void run0() throws IOException {
@@ -142,26 +133,62 @@ public class ClientHandler implements Runnable {
         result.clientId = identification.clientId;
         sendPacket(result);
 
+        username = identification.username;
+        Log.i(username + " connected");
+
         HomeData homeData = new HomeData();
         homeData.onlinePlayerCount = cheshkaServer.getOnlinePlayerCount();
-        cheshkaServer.accessGameRooms(gameRooms -> {
-            homeData.activeGamesCount = gameRooms.size();
-
-            return true;
-        });
+        cheshkaServer.accessGameRooms(gameRooms -> homeData.activeGamesCount = gameRooms.size());
         sendPacket(homeData);
 
         while (true) {
             receivePacket(null);
 
-            synchronized (this) {
-                if (packetQueue.size() >= MAX_PACKET_COUNT_IN_QUEUE) {
-                    sendDisconnect("Too many packets");
+            if (gameRoom != null && (received instanceof RollDice || received instanceof MakeMove)) {
+                queueCurrentPacket();
 
-                    return;
-                }
-                packetQueue.add(received);
+                continue;
             }
+            if (gameRoom == null && !matchmaking && received instanceof InitiateMatchmaking initiateMatchmaking) {
+                boolean disconnect = false;
+                String code = initiateMatchmaking.invitationCode;
+                boolean shouldMarkMatchmaking = switch (initiateMatchmaking.mode) {
+                    case InitiateMatchmaking.MODE_ACCEPT_INVITE -> handleAcceptInvite(code);
+                    case InitiateMatchmaking.MODE_CREATE_INVITE -> handleCreateInvite();
+                    case InitiateMatchmaking.MODE_RANDOM_OPPONENT -> handleRandomMatchmaking();
+                    default -> {
+                        disconnect = true;
+                        sendDisconnect("Unknown InitiateMatchmaking mode");
+
+                        yield false;
+                    }
+                };
+                if (disconnect) break;
+
+                if (shouldMarkMatchmaking) {
+                    matchmaking = true;
+
+                    MatchmakingStarted matchmakingStarted = new MatchmakingStarted();
+                    //noinspection DataFlowIssue (if shouldMarkMatchmaking is true, then gameRoom != null)
+                    matchmakingStarted.hasInvitationCode = gameRoom.hasInvitationCode();
+                    matchmakingStarted.invitationCode = gameRoom.getInvitationCode();
+                    sendPacket(matchmakingStarted);
+                }
+            }
+            sendDisconnect("Unexpected packet");
+
+            break;
+        }
+    }
+
+    private void queueCurrentPacket() throws IOException {
+        synchronized (this) {
+            if (packetQueue.size() >= MAX_PACKET_COUNT_IN_QUEUE) {
+                sendDisconnect("Too many packets");
+
+                return;
+            }
+            packetQueue.add(received);
         }
     }
 
@@ -219,8 +246,6 @@ public class ClientHandler implements Runnable {
     }
 
     public void close() {
-        try {
-            socket.close();
-        } catch (IOException ignored) {}
+        Helper.close(socket);
     }
 }

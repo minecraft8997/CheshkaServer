@@ -2,9 +2,8 @@ package ru.deewend.cheshka.server;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import static ru.deewend.cheshka.server.CheshkaServer.*;
+import static ru.deewend.cheshka.server.CheshkaServer.MAX_SLEEP_TIME_MS;
 
 public class UpdateTask implements Runnable {
     private final CheshkaServer server;
@@ -41,20 +40,16 @@ public class UpdateTask implements Runnable {
 
     private void tick() {
         server.accessGameRooms(gameRooms -> {
-            if (gameRooms.isEmpty()) return true;
+            if (gameRooms.isEmpty()) return;
 
-            List<String> entriesToRemove = new ArrayList<>();
+            List<GameRoom> entriesToRemove = new ArrayList<>();
 
-            for (Map.Entry<String, GameRoom> entry : gameRooms.entrySet()) {
-                GameRoom gameRoom = entry.getValue();
-
-                if (!gameRoom.tick()) entriesToRemove.add(entry.getKey());
+            for (GameRoom gameRoom : gameRooms) {
+                if (!gameRoom.tick()) entriesToRemove.add(gameRoom);
             }
-            for (String key : entriesToRemove) { // key = invitationCode
-                gameRooms.remove(key);
+            for (GameRoom gameRoom : entriesToRemove) {
+                gameRooms.remove(gameRoom);
             }
-
-            return true;
         });
     }
 }

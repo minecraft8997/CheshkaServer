@@ -3,6 +3,7 @@ package ru.deewend.cheshka.server;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -12,7 +13,7 @@ import java.util.zip.CRC32;
 
 public class Helper {
     public interface Providable<T> {
-        boolean provide(T object) throws Exception;
+        void provide(T object) throws Exception;
     }
 
     public static final int SERVER_VERSION_CODE = 1;
@@ -180,5 +181,12 @@ public class Helper {
         }
 
         return true;
+    }
+
+    public static void close(Socket socket) {
+        try {
+            socket.close();
+        } catch (IOException ignored) {
+        }
     }
 }

@@ -17,24 +17,28 @@ public class GameRoom {
     private int hostPlayerRemainingTimeTicks = CheshkaServer.PLAYER_TIME_S * 20;
     private int opponentPlayerRemainingTimeTicks = CheshkaServer.PLAYER_TIME_S * 20;
 
-    public GameRoom(CheshkaServer cheshkaServer, ClientHandler hostPlayerHandler) {
+    public GameRoom(CheshkaServer cheshkaServer, ClientHandler hostPlayerHandler, boolean hasInvitationCode) {
         this.cheshkaServer = cheshkaServer;
         this.hostPlayerHandler = hostPlayerHandler;
 
-        Random random = this.cheshkaServer.getRandom();
-        // generating invitation code
-        byte[] b = new byte[2];
-        random.nextBytes(b);
-        int v1 = Byte.toUnsignedInt(b[0]);
-        int v2 = Byte.toUnsignedInt(b[1]);
-        String v1s = Integer.toHexString(v1);
-        String v2s = Integer.toHexString(v2);
+        Random random = cheshkaServer.getRandom();
+        if (hasInvitationCode) {
+            byte[] b = new byte[2];
+            random.nextBytes(b);
+            int v1 = Byte.toUnsignedInt(b[0]);
+            int v2 = Byte.toUnsignedInt(b[1]);
+            String v1s = Integer.toHexString(v1);
+            String v2s = Integer.toHexString(v2);
 
-        if (v1s.length() == 1) v1s = "0" + v1s;
-        if (v2s.length() == 1) v2s = "0" + v2s;
-        this.invitationCode = (v1s + v2s)
-                .replace("dead", String.valueOf(1000 + random.nextInt(9000)))
-                .replace("666", "545"); // replace inappropriate codes
+            if (v1s.length() == 1) v1s = "0" + v1s;
+            if (v2s.length() == 1) v2s = "0" + v2s;
+            invitationCode = (v1s + v2s)
+                    .replace("dead", String.valueOf(1000 + random.nextInt(9000)))
+                    .replace("666", "545"); // replace inappropriate codes
+        } else {
+            invitationCode = null;
+        }
+
 
         this.hostColor = random.nextBoolean();
         this.board = new Board(cheshkaServer.getRandom(), CheshkaServer.BOARD_SIZE);
@@ -109,6 +113,10 @@ public class GameRoom {
 
     public ClientHandler getWhoMakesAMove() {
         return whoMakesAMove;
+    }
+
+    public boolean hasInvitationCode() {
+        return invitationCode != null;
     }
 
     public String getInvitationCode() {

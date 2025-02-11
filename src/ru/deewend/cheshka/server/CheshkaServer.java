@@ -18,13 +18,13 @@ public class CheshkaServer {
     public static final int MAX_HOST_WAITING_TIME_S;
     public static final int MAX_HOST_WAITING_TIME_TICKS;
     public static final byte ACTION_ACCEPT = 0;
-    public static final byte ACTION_AND_CLOSE_LATER = 1;
+    public static final byte ACTION_ACCEPT_AND_CLOSE_LATER = 1;
     public static final byte ACTION_CLOSE_NOW = 2;
     public static final String PROPERTY_PREFIX = "cheshka.server.";
 
     private final Random random = new Random();
     private volatile int onlinePlayerCount;
-    private final Map<String, GameRoom> gameRooms = new HashMap<>();
+    private final Set<GameRoom> gameRooms = new HashSet<>();
 
     static {
         Log.i("Initializing");
@@ -66,23 +66,19 @@ public class CheshkaServer {
             byte action;
             synchronized (this) {
                 int onlinePlayerCount = ++this.onlinePlayerCount;
-                if (onlinePlayerCount <= MAX_ONLINE_PLAYER_COUNT)
-                    action = ACTION_ACCEPT;
-                else if (onlinePlayerCount <= MAX_ONLINE_PLAYER_COUNT_SOFT_KICK)
-                    action = ACTION_AND_CLOSE_LATER;
-                else
-                    action = ACTION_CLOSE_NOW;
+
+                if (onlinePlayerCount <= MAX_ONLINE_PLAYER_COUNT)                action = ACTION_ACCEPT;
+                else if (onlinePlayerCount <= MAX_ONLINE_PLAYER_COUNT_SOFT_KICK) action = ACTION_ACCEPT_AND_CLOSE_LATER;
+                else                                                             action = ACTION_CLOSE_NOW;
             }
 
             ClientHandler handler;
             if (action == ACTION_ACCEPT) {
                 handler = new ClientHandler(this, socket);
-            } else if (action == ACTION_AND_CLOSE_LATER) {
+            } else if (action == ACTION_ACCEPT_AND_CLOSE_LATER) {
                 handler = new ClientHandler(this, socket, true);
             } else {
-                try {
-                    socket.close();
-                } catch (IOException ignored) {}
+                Helper.close(socket);
 
                 continue;
             }
@@ -103,10 +99,10 @@ public class CheshkaServer {
         onlinePlayerCount--;
     }
 
-    public boolean accessGameRooms(Helper.Providable<Map<String, GameRoom>> providable) {
+    public void accessGameRooms(Helper.Providable<Set<GameRoom>> providable) {
         synchronized (gameRooms) {
             try {
-                return providable.provide(gameRooms);
+                providable.provide(gameRooms);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
