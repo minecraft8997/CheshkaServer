@@ -3,18 +3,21 @@ package ru.deewend.cheshka.server;
 import ru.deewend.cheshka.server.annotation.Clientbound;
 import ru.deewend.cheshka.server.packet.*;
 
+import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 
 import static ru.deewend.cheshka.server.Helper.getClassName;
 
 public class ClientHandler implements Runnable {
     public static final int MAX_PACKET_COUNT_IN_QUEUE = 50;
+    public static final int CAPTCHA_ATTEMPTS = 10;
 
     private final CheshkaServer cheshkaServer;
     private final Socket socket;
@@ -77,7 +80,13 @@ public class ClientHandler implements Runnable {
         });
     }
 
-    private void handleAcceptInvite(String invitationCode) {
+    private void handleAcceptInvite(String invitationCode) throws IOException {
+        if (!Helper.checkInvitationCode(invitationCode)) {
+            sendPacket(new OpponentNotFound());
+
+            return;
+        }
+
         cheshkaServer.accessGameRooms(gameRooms -> {
             for (GameRoom room : gameRooms) {
                 if (invitationCode.equals(room.getInvitationCode())) {
@@ -134,25 +143,46 @@ public class ClientHandler implements Runnable {
 
         receivePacket(ClientIdentification.class);
         ClientIdentification identification = (ClientIdentification) received;
-        if (!Helper.validateUsername(identification.username)) {
+        String username = identification.username;
+        if (!Helper.validateUsername(username)) {
             sendDisconnect("Bad username. Should be from " +
                     "2 to 16 characters long, should contain only 0-9, a-z, A-Z, dot and underscore symbols");
 
             return;
         }
-        // of course, we'll need to implement a lot of checks here
-        if (!Helper.NULL_UUID_OBJ.equals(identification.clientId)) {
-            sendDisconnect("Unexpected UUID (?)");
+        UUID clientId = identification.clientId;
+        if (Helper.NULL_UUID_OBJ.equals(clientId) || !DB.getInstance().isUserVerified(clientId)) {
+            int attempts = 0;
+            while (attempts++ < CAPTCHA_ATTEMPTS) {
+                Pair<BufferedImage, String> captcha = Helper.generateCaptcha();
 
-            return;
+                IdentificationResult challengeRequired = new IdentificationResult();
+                challengeRequired.success = false;
+                challengeRequired.captcha = captcha.first();
+                sendPacket(challengeRequired);
+
+                String answer = captcha.second();
+
+                receivePacket(ClientIdentification.class);
+                if (answer.equalsIgnoreCase(((ClientIdentification) received).captcha)) break;
+            }
+            if (attempts >= CAPTCHA_ATTEMPTS) {
+                // in case of running out of attempts, should be equal to CAPTCHA_ATTEMPTS + 1
+                sendDisconnect("Captcha challenge was not completed");
+
+                return;
+            }
         }
+        clientId = UUID.randomUUID();
+        DB.getInstance().saveVerified(clientId);
+
         IdentificationResult result = new IdentificationResult();
         result.success = true;
-        result.displayName = identification.username + " (test)";
-        result.clientId = identification.clientId;
+        result.displayName = username + " (test)";
+        result.clientId = clientId;
         sendPacket(result);
 
-        username = identification.username;
+        this.username = username;
         Log.i(username + " connected");
 
         HomeData homeData = new HomeData();

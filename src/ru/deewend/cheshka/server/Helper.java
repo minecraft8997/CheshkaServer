@@ -158,6 +158,24 @@ public class Helper {
         }
     }
 
+    public static Pair<BufferedImage, String> generateCaptcha() {
+        return new Pair<>(new BufferedImage(320, 240, BufferedImage.TYPE_INT_ARGB), "0000");
+    }
+
+    public static boolean checkInvitationCode(String code) {
+        if (code.length() != 4) return false;
+
+        for (int i = 0; i < code.length(); i++) {
+            char currentChar = code.charAt(i);
+            if (currentChar >= 'a' && currentChar <= 'f') continue;
+            if (currentChar >= '0' && currentChar <= '9') continue;
+
+            return false;
+        }
+
+        return true;
+    }
+
     public static boolean validateUsername(String username) {
         if (username == null) {
             return false;

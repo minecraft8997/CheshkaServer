@@ -2,6 +2,8 @@ package ru.deewend.cheshka.server;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -53,12 +55,12 @@ public class DB {
         int outdatedEntries = 0;
         boolean readingEntry = false;
         try (
-                DataInputStream stream = new DataInputStream(new BufferedInputStream(new FileInputStream(dbFile)));
+                DataInputStream stream = openDBInputStream();
                 /*
                  * The second stream is a thing only when we're performing a cleanup.
                  */
-                DataOutputStream tmpStream = new DataOutputStream(!scan ? new BufferedOutputStream(Files
-                        .newOutputStream(dbTmpFile.toPath(), StandardOpenOption.CREATE)) : new ByteArrayOutputStream())
+                DataOutputStream tmpStream =
+                        new DataOutputStream(!scan ? openBufferedOutputStream(dbTmpFile) : new ByteArrayOutputStream())
         ) {
             while (true) {
                 long most = 0L;
@@ -84,7 +86,7 @@ public class DB {
                 entries++;
             }
         } catch (IOException e) {
-            if (e instanceof FileNotFoundException) return;
+            if (e instanceof NoSuchFileException) return;
 
             if (!(e instanceof EOFException)) {
                 String state = (scan ? "scan" : "cleanup");
@@ -132,7 +134,75 @@ public class DB {
         runScanCleanup(false, entries);
     }
 
-    public boolean isUserVerified(UUID clientId) {
+    private DataInputStream openDBInputStream(OpenOption... additionalOptions) throws IOException {
+        return new DataInputStream(openBufferedInputStream(dbFile, additionalOptions));
+    }
 
+    private BufferedInputStream openBufferedInputStream(File file, OpenOption... additionalOptions) throws IOException {
+        return new BufferedInputStream(Files.newInputStream(file.toPath(), generateOptions(additionalOptions)));
+    }
+
+    private DataOutputStream openDBOutputStream(OpenOption... additionalOptions) throws IOException {
+        return new DataOutputStream(openBufferedOutputStream(dbFile, additionalOptions));
+    }
+
+    private BufferedOutputStream openBufferedOutputStream(
+            File file, OpenOption... additionalOptions
+    ) throws IOException {
+        return new BufferedOutputStream(Files.newOutputStream(file.toPath(), generateOptions(additionalOptions)));
+    }
+
+    private OpenOption[] generateOptions(OpenOption... additionalOptions) {
+        OpenOption[] options;
+        if (additionalOptions.length == 0) {
+            /*
+             * CREATE seems to do nothing against input streams opened via Files#newInputStream.
+             */
+            options = new OpenOption[] { StandardOpenOption.CREATE };
+        } else {
+            options = new OpenOption[additionalOptions.length + 1];
+            options[0] = StandardOpenOption.CREATE;
+
+            System.arraycopy(additionalOptions, 0, options, 1, additionalOptions.length);
+        }
+
+        return options;
+    }
+
+    public boolean isUserVerified(UUID clientId) {
+        long most = clientId.getMostSignificantBits();
+        long least = clientId.getLeastSignificantBits();
+
+        synchronized (this) {
+            try (DataInputStream stream = openDBInputStream()) {
+                long currentMost = stream.readLong();
+                long currentLeast = stream.readLong();
+                long timestamp = stream.readLong();
+
+                if (most == currentMost && least == currentLeast) {
+                    return System.currentTimeMillis() - timestamp < MAX_CAPTCHA_VERIFICATION_AGE_MS;
+                }
+            } catch (IOException e) {
+                if (!(e instanceof EOFException || e instanceof NoSuchFileException)) Log.w("Reading DB", e);
+            }
+        }
+
+        return false;
+    }
+
+    public void saveVerified(UUID clientId) {
+        long most = clientId.getMostSignificantBits();
+        long least = clientId.getLeastSignificantBits();
+        long currentTime = System.currentTimeMillis();
+
+        synchronized (this) {
+            try (DataOutputStream stream = openDBOutputStream(StandardOpenOption.APPEND)) {
+                stream.writeLong(most);
+                stream.writeLong(least);
+                stream.writeLong(currentTime);
+            } catch (IOException e) {
+                Log.w("Writing to DB", e);
+            }
+        }
     }
 }
