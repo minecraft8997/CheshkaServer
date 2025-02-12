@@ -41,7 +41,7 @@ public class Helper {
      */
     public static final int SERVER_HELLO_MAGIC = 0xDEE111ED;
 
-    public static final int SECRET = 0xA115E11C; // reverted Helper.CLIENT_HELLO_MAGIC
+    public static final int SIGNATURE_MAGIC = 0xA115E11C; // reverted Helper.CLIENT_HELLO_MAGIC
 
     private Helper() {
     }
@@ -72,7 +72,7 @@ public class Helper {
         byte[] contents = new byte[length];
         stream.readFully(contents);
 
-        if ((signature ^ SECRET) != calculateCRC32(contents)) {
+        if ((signature ^ SIGNATURE_MAGIC) != calculateCRC32(contents)) {
             throw new IOException("Bad signature");
         }
 
@@ -86,7 +86,7 @@ public class Helper {
             throw new RuntimeException("Array is too long");
         }
         stream.writeShort(length);
-        int signature = calculateCRC32(contents) ^ SECRET;
+        int signature = calculateCRC32(contents) ^ SIGNATURE_MAGIC;
         stream.writeInt(signature);
 
         stream.write(contents);

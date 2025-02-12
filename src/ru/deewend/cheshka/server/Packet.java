@@ -63,6 +63,8 @@ public abstract class Packet {
             Class<?> type = field.getType();
             if (type == byte.class) {
                 field.set(packet, stream.readByte());
+            } else if (type == boolean.class) {
+                field.set(packet, stream.readBoolean());
             } else if (type == int.class) {
                 field.set(packet, stream.readInt());
             } else if (type == UUID.class) {
@@ -98,6 +100,8 @@ public abstract class Packet {
                 Class<?> type = field.getType();
                 if (type == byte.class) {
                     stream.writeByte(field.getByte(this));
+                } else if (type == boolean.class) {
+                    stream.writeBoolean(field.getBoolean(this));
                 } else if (type == int.class) {
                     stream.writeInt(field.getInt(this));
                 } else if (type == UUID.class) {

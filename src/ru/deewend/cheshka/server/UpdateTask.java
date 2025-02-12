@@ -39,16 +39,18 @@ public class UpdateTask implements Runnable {
     }
 
     private void tick() {
+        DB.getInstance().tick();
+
         server.accessGameRooms(gameRooms -> {
             if (gameRooms.isEmpty()) return;
 
-            List<GameRoom> entriesToRemove = new ArrayList<>();
+            List<GameRoom> roomsForRemoval = new ArrayList<>();
 
-            for (GameRoom gameRoom : gameRooms) {
-                if (!gameRoom.tick()) entriesToRemove.add(gameRoom);
+            for (GameRoom room : gameRooms) {
+                if (!room.tick()) roomsForRemoval.add(room);
             }
-            for (GameRoom gameRoom : entriesToRemove) {
-                gameRooms.remove(gameRoom);
+            for (GameRoom room : roomsForRemoval) {
+                gameRooms.remove(room);
             }
         });
     }

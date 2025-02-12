@@ -68,7 +68,7 @@ public class ClientHandler implements Runnable {
     public void externalSendPacket(Packet packet) {
         if (outputStream == null) return;
 
-        //noinspection resource
+        //noinspection resource (?)
         ForkJoinPool.commonPool().execute(() -> {
             try {
                 sendPacket(packet);
@@ -77,20 +77,39 @@ public class ClientHandler implements Runnable {
         });
     }
 
-    private boolean handleAcceptInvite(String invitationCode) {
+    private void handleAcceptInvite(String invitationCode) {
         cheshkaServer.accessGameRooms(gameRooms -> {
+            for (GameRoom room : gameRooms) {
+                if (invitationCode.equals(room.getInvitationCode())) {
+                    room.connectOpponentPlayer(this);
 
+                    return;
+                }
+            }
+
+            externalSendPacket(new OpponentNotFound());
         });
-
-        return false;
     }
 
-    private boolean handleCreateInvite() {
-        return true;
+    private void handleCreateInvite() {
+        gameRoom = new GameRoom(cheshkaServer, this, true);
+
+        cheshkaServer.accessGameRooms(gameRooms -> gameRooms.add(gameRoom));
     }
 
-    private boolean handleRandomMatchmaking() {
-        throw new UnsupportedOperationException();
+    private void handleRandomMatchmaking() {
+        cheshkaServer.accessGameRooms(gameRooms -> {
+            for (GameRoom room : gameRooms) {
+                if (!room.hasInvitationCode() && room.isMatchmaking()) {
+                    room.connectOpponentPlayer(this);
+
+                    return;
+                }
+            }
+            gameRoom = new GameRoom(cheshkaServer, this, false);
+
+            gameRooms.add(gameRoom);
+        });
     }
 
     private void run0() throws IOException {
@@ -144,7 +163,7 @@ public class ClientHandler implements Runnable {
         while (true) {
             receivePacket(null);
 
-            if (gameRoom != null && (received instanceof RollDice || received instanceof MakeMove)) {
+            if (gameRoom != null && !matchmaking && (received instanceof RollDice || received instanceof MakeMove)) {
                 queueCurrentPacket();
 
                 continue;
@@ -152,26 +171,24 @@ public class ClientHandler implements Runnable {
             if (gameRoom == null && !matchmaking && received instanceof InitiateMatchmaking initiateMatchmaking) {
                 boolean disconnect = false;
                 String code = initiateMatchmaking.invitationCode;
-                boolean shouldMarkMatchmaking = switch (initiateMatchmaking.mode) {
+                switch (initiateMatchmaking.mode) {
                     case InitiateMatchmaking.MODE_ACCEPT_INVITE -> handleAcceptInvite(code);
                     case InitiateMatchmaking.MODE_CREATE_INVITE -> handleCreateInvite();
                     case InitiateMatchmaking.MODE_RANDOM_OPPONENT -> handleRandomMatchmaking();
                     default -> {
                         disconnect = true;
                         sendDisconnect("Unknown InitiateMatchmaking mode");
-
-                        yield false;
                     }
-                };
+                }
                 if (disconnect) break;
 
-                if (shouldMarkMatchmaking) {
-                    matchmaking = true;
-
+                matchmaking = (initiateMatchmaking.mode != InitiateMatchmaking.MODE_ACCEPT_INVITE);
+                if (matchmaking) {
                     MatchmakingStarted matchmakingStarted = new MatchmakingStarted();
-                    //noinspection DataFlowIssue (if shouldMarkMatchmaking is true, then gameRoom != null)
-                    matchmakingStarted.hasInvitationCode = gameRoom.hasInvitationCode();
-                    matchmakingStarted.invitationCode = gameRoom.getInvitationCode();
+                    if (gameRoom != null) {
+                        matchmakingStarted.hasInvitationCode = gameRoom.hasInvitationCode();
+                        matchmakingStarted.invitationCode = gameRoom.getInvitationCode();
+                    }
                     sendPacket(matchmakingStarted);
                 }
             }
