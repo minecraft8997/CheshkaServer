@@ -47,7 +47,10 @@ public class UpdateTask implements Runnable {
             List<GameRoom> roomsForRemoval = new ArrayList<>();
 
             for (GameRoom room : gameRooms) {
-                if (!room.tick()) roomsForRemoval.add(room);
+                if (!room.tick()) {
+                    room.cleanup();
+                    roomsForRemoval.add(room);
+                }
             }
             for (GameRoom room : roomsForRemoval) {
                 gameRooms.remove(room);

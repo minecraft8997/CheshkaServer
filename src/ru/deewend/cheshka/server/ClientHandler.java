@@ -25,7 +25,8 @@ public class ClientHandler implements Runnable {
     private volatile OutputStream outputStream;
     private final boolean closeBecauseOfOverload;
     private Packet received;
-    private String username;
+    private volatile String username;
+    private volatile UUID clientId;
     private final Queue<Packet> packetQueue = new ArrayDeque<>();
     final Queue<Packet> gameRoomPacketQueue = new ArrayDeque<>();
     private boolean host;
@@ -172,27 +173,38 @@ public class ClientHandler implements Runnable {
 
                 return;
             }
+            clientId = UUID.randomUUID();
+            DB.getInstance().saveVerified(clientId);
         }
-        clientId = UUID.randomUUID();
-        DB.getInstance().saveVerified(clientId);
-
         IdentificationResult result = new IdentificationResult();
         result.success = true;
-        result.displayName = username + " (test)";
+        result.displayName = username;
         result.clientId = clientId;
         sendPacket(result);
 
         this.username = username;
+        this.clientId = clientId;
         Log.i(username + " connected");
 
-        HomeData homeData = new HomeData();
-        homeData.onlinePlayerCount = cheshkaServer.getOnlinePlayerCount();
-        cheshkaServer.accessGameRooms(gameRooms -> homeData.activeGamesCount = gameRooms.size());
-        sendPacket(homeData);
+        cheshkaServer.accessGameRooms(gameRooms -> {
+            for (GameRoom room : gameRooms) {
+                if (room.reconnectPlayer(this)) return;
+            }
+            HomeData homeData = new HomeData();
+            homeData.onlinePlayerCount = cheshkaServer.getOnlinePlayerCount();
+            homeData.activeGamesCount = gameRooms.size();
+
+            externalSendPacket(homeData);
+        });
 
         while (true) {
             receivePacket(null);
 
+            if (gameRoom != null && gameRoom.isObsolete()) {
+                gameRoom = null;
+
+                clearQueue();
+            }
             if (gameRoom != null && !matchmaking && (received instanceof RollDice || received instanceof MakeMove)) {
                 queueCurrentPacket();
 
@@ -228,15 +240,17 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void queueCurrentPacket() throws IOException {
-        synchronized (this) {
-            if (packetQueue.size() >= MAX_PACKET_COUNT_IN_QUEUE) {
-                sendDisconnect("Too many packets");
+    private synchronized void queueCurrentPacket() {
+        if (packetQueue.size() >= MAX_PACKET_COUNT_IN_QUEUE) {
+            disconnectAsync("Too many packets");
 
-                return;
-            }
-            packetQueue.add(received);
+            return;
         }
+        packetQueue.add(received);
+    }
+
+    private synchronized void clearQueue() {
+        packetQueue.clear();
     }
 
     private void sendDisconnect(String reason) throws IOException {
@@ -244,7 +258,7 @@ public class ClientHandler implements Runnable {
     }
 
     @SuppressWarnings("SameParameterValue")
-    private void sendDisconnectAsync(String reason) {
+    public void disconnectAsync(String reason) {
         externalSendPacket(craftDisconnectPacket(reason));
         externalClose();
     }
@@ -294,5 +308,13 @@ public class ClientHandler implements Runnable {
 
     public void close() {
         Helper.close(socket);
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public UUID getClientId() {
+        return clientId;
     }
 }

@@ -134,6 +134,12 @@ public class Board {
         blacksDiagonalStartPlusOne = whitesDiagonalStart + diagonalLength;
     }
 
+    public static String serializePosition(Board board, boolean white) {
+        if (board == null) return "";
+
+        throw new UnsupportedOperationException();
+    }
+
     public Pair<Integer, List<PossibleMove>> rollDice() {
         int digit = 1 + random.nextInt(6);
         lastDiceRollResult = digit;
