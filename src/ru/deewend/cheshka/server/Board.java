@@ -1,5 +1,7 @@
 package ru.deewend.cheshka.server;
 
+import ru.deewend.cheshka.server.packet.MakeMove;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -74,6 +76,10 @@ public class Board {
             }
         }
 
+        public byte getMoveType() {
+            return (isSpawningMove() ? MakeMove.MOVE_TYPE_SPAWNING : MakeMove.MOVE_TYPE_GENERAL);
+        }
+
         public boolean isSpawningMove() {
             return piece == null;
         }
@@ -96,6 +102,10 @@ public class Board {
         public void makeMove() {
             // do nothing
         }
+
+        public byte getMoveType() {
+            return MakeMove.MOVE_TYPE_NO_MOVE;
+        }
     }
 
     public static final int NO_MOVE_DRAW_THRESHOLD =
@@ -113,6 +123,7 @@ public class Board {
     private final int blacksDiagonalStartPlusOne;
     private final List<Piece> pieces = new ArrayList<>();
     private int moveNumber = 1;
+    private int subMoveNumber = 1;
     private boolean whitesTurn = true;
     private int lastDiceRollResult;
     private int lastCalculatedDestination;
@@ -134,10 +145,8 @@ public class Board {
         blacksDiagonalStartPlusOne = whitesDiagonalStart + diagonalLength;
     }
 
-    public static String serializePosition(Board board, boolean white) {
-        if (board == null) return "";
-
-        throw new UnsupportedOperationException();
+    public String serializePosition(boolean white) {
+        return "";
     }
 
     public Pair<Integer, List<PossibleMove>> rollDice() {
@@ -223,7 +232,7 @@ public class Board {
     }
 
     @SuppressWarnings("ExtractMethodRecommender")
-    public void makeMove(PossibleMove move) {
+    public MakeMove makeMove(PossibleMove move) {
         if (gameState != GAME_STATE_RUNNING) {
             throw new IllegalStateException("Attempted to make a move in a finished game");
         }
@@ -282,11 +291,17 @@ public class Board {
                 lastChance = true;
             }
         }
+        MakeMove packet = new MakeMove();
+        packet.moveNumber = moveNumber;
+        packet.subMoveNumber = subMoveNumber++;
+        packet.moveType = move.getMoveType();
 
-        if (!whitesTurn) {
-            moveNumber++;
-        }
         if (lastDiceRollResult != 6) { // rolling 6 gives you the right to make one more move
+            if (!whitesTurn) {
+                moveNumber++;
+                subMoveNumber = 1;
+            }
+
             whitesTurn = !whitesTurn;
 
             if (lastChance) {
@@ -298,6 +313,8 @@ public class Board {
                 }
             }
         }
+
+        return packet;
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")

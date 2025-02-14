@@ -3,6 +3,7 @@ package ru.deewend.cheshka.server;
 import ru.deewend.cheshka.server.packet.OpponentFound;
 import ru.deewend.cheshka.server.packet.OpponentNotFound;
 
+import java.util.Queue;
 import java.util.Random;
 import java.util.UUID;
 
@@ -50,23 +51,41 @@ public class GameRoom {
     }
 
     public boolean tick() {
-        if (board == null && opponentPlayer == null) {
+        if (matchmaking) {
             if (++waitingForOpponentTicks >= WAITING_FOR_OPPONENT_TIMEOUT_TICKS) {
                 hostPlayer.externalSendPacket(new OpponentNotFound());
 
                 return false;
             }
-            if (hostPlayer.isClosed() || opponentPlayer == null) return true;
+            /*
+             * if (hostPlayer.isClosed()) return false; // host has left, the game won't start
+             * return true;
+             */
+            return !hostPlayer.isClosed();
         }
         if (board == null) {
             board = new Board(random, CheshkaServer.BOARD_SIZE);
-        }
 
+            sendOpponentFound(hostPlayer);
+            sendOpponentFound(opponentPlayer);
+            whoseTurn = (hostColor ? hostPlayer : opponentPlayer);
+        }
+        //noinspection SynchronizeOnNonFinalField
+        synchronized (whoseTurn) {
+            Queue<Packet> queue = whoseTurn.gameRoomPacketQueue;
+            while (!queue.isEmpty()) {
+                Packet packet = queue.remove();
+
+                board.rollDice()
+            }
+        }
 
         return true;
     }
 
     public boolean reconnectPlayer(ClientHandler player) {
+        if (board == null) return false;
+
         boolean host;
         UUID playerUUID = player.getClientId();
         if (!(host = playerUUID.equals(getHostPlayerUUID())) && !playerUUID.equals(getOpponentPlayerUUID())) {
@@ -99,15 +118,15 @@ public class GameRoom {
         this.opponentPlayer = opponentPlayer;
     }
 
-    public void sendOpponentFound(ClientHandler handler) {
+    public void sendOpponentFound(ClientHandler handler) { // board is non-null in both cases when this method is called
         OpponentFound opponentFound = new OpponentFound();
         ClientHandler opponent = (handler == hostPlayer ? opponentPlayer : hostPlayer);
         opponentFound.opponentDisplayName = opponent.getUsername();
         opponentFound.boardSize = CheshkaServer.BOARD_SIZE;
         opponentFound.secondsForTurn = TURN_WAITING_TIMEOUT_SECONDS;
         boolean myColor = ((handler == hostPlayer) == hostColor); // (handler == hostPlayer ? hostColor : !hostColor)
-        opponentFound.myPiecePositions = Board.serializePosition(board, myColor);
-        opponentFound.opponentPiecePositions = Board.serializePosition(board, !myColor);
+        opponentFound.myPiecePositions = board.serializePosition(myColor);
+        opponentFound.opponentPiecePositions = board.serializePosition(!myColor);
         opponentFound.whiteColor = myColor;
         opponentFound.myTurnNow = (handler == whoseTurn);
 
@@ -127,10 +146,6 @@ public class GameRoom {
         return (opponentPlayer != null ? opponentPlayer.getClientId() : null);
     }
 
-    public ClientHandler getWhoseTurn() {
-        return whoseTurn;
-    }
-
     public boolean isMatchmaking() {
         return matchmaking;
     }
@@ -141,10 +156,6 @@ public class GameRoom {
 
     public String getInvitationCode() {
         return invitationCode;
-    }
-
-    public boolean getHostColor() {
-        return hostColor;
     }
 
     public boolean isObsolete() {
