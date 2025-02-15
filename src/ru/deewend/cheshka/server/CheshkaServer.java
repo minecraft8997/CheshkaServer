@@ -25,9 +25,10 @@ public class CheshkaServer {
     private final Set<GameRoom> gameRooms = new HashSet<>();
 
     static {
-        Log.i("Initializing");
         SHOW_PROPERTIES = Boolean.parseBoolean(
                 Helper.getProperty("showProperties", "false"));
+
+        Log.i("Initializing");
         SERVER_PORT = Integer.parseInt(
                 Helper.getProperty("port", "23829")); // Math.abs("Cheshka".hashCode() % 65536)
         BOARD_SIZE = Integer.parseInt(

@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact name="CheshkaServer:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/CheshkaServer_jar</output-path>
+    <root id="root">
+      <element id="archive" name="CheshkaServer.jar">
+        <element id="module-output" name="CheshkaServer" />
+      </element>
+    </root>
+  </artifact>
+</component>
