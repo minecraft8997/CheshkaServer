@@ -1,11 +1,14 @@
 package ru.deewend.cheshka.server;
 
+import ru.deewend.cheshka.server.packet.MakeMove;
 import ru.deewend.cheshka.server.packet.OpponentFound;
 import ru.deewend.cheshka.server.packet.OpponentNotFound;
+import ru.deewend.cheshka.server.packet.RollDice;
 
 import java.util.Queue;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class GameRoom {
     public static final int WAITING_FOR_OPPONENT_TIMEOUT_SECONDS =
@@ -15,6 +18,8 @@ public class GameRoom {
 
     private static final int WAITING_FOR_OPPONENT_TIMEOUT_TICKS =
             WAITING_FOR_OPPONENT_TIMEOUT_SECONDS * CheshkaServer.TICK_RATE_HZ;
+
+    private static final long TURN_WAITING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(TURN_WAITING_TIMEOUT_SECONDS);
 
     private final Random random;
     private ClientHandler hostPlayer;
@@ -64,21 +69,27 @@ public class GameRoom {
             return !hostPlayer.isClosed();
         }
         if (board == null) {
-            board = new Board(random, CheshkaServer.BOARD_SIZE);
+            board = new Board(random, CheshkaServer.BOARD_SIZE, TURN_WAITING_TIMEOUT_MILLIS);
 
             sendOpponentFound(hostPlayer);
             sendOpponentFound(opponentPlayer);
             whoseTurn = (hostColor ? hostPlayer : opponentPlayer);
         }
+        boolean whitesTurn = ((whoseTurn == hostPlayer) == hostColor);
         //noinspection SynchronizeOnNonFinalField
         synchronized (whoseTurn) {
             Queue<Packet> queue = whoseTurn.gameRoomPacketQueue;
             while (!queue.isEmpty()) {
                 Packet packet = queue.remove();
 
-                board.rollDice()
+                if (packet instanceof RollDice) {
+                    sendBothAsyncIfNonNull(board.rollDice());
+                } else if (packet instanceof MakeMove makeMove) {
+                    sendBothAsyncIfNonNull(board.makeMove(makeMove, whitesTurn));
+                }
             }
         }
+        sendBothAsyncIfNonNull(board.checkTimeout());
 
         return true;
     }
@@ -118,7 +129,7 @@ public class GameRoom {
         this.opponentPlayer = opponentPlayer;
     }
 
-    public void sendOpponentFound(ClientHandler handler) { // board is non-null in both cases when this method is called
+    private void sendOpponentFound(ClientHandler handler) { // board is non-null in both cases when this method is called
         OpponentFound opponentFound = new OpponentFound();
         ClientHandler opponent = (handler == hostPlayer ? opponentPlayer : hostPlayer);
         opponentFound.opponentDisplayName = opponent.getUsername();
@@ -131,6 +142,13 @@ public class GameRoom {
         opponentFound.myTurnNow = (handler == whoseTurn);
 
         handler.externalSendPacket(opponentFound);
+    }
+
+    private void sendBothAsyncIfNonNull(Packet packet) {
+        if (packet == null) return;
+
+        hostPlayer.externalSendPacket(packet);
+        if (opponentPlayer != null) opponentPlayer.externalSendPacket(packet);
     }
 
     public void cleanup() {

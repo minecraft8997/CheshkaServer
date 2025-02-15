@@ -1,5 +1,6 @@
 package ru.deewend.cheshka.server;
 
+import ru.deewend.cheshka.server.packet.DiceRolled;
 import ru.deewend.cheshka.server.packet.MakeMove;
 
 import java.util.ArrayList;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Random;
 
 public class Board {
+    @SuppressWarnings("unused")
     public static class Piece {
         private final boolean whitePiece;
         private int position;
@@ -44,6 +46,7 @@ public class Board {
         }
     }
 
+    @SuppressWarnings("unused")
     public class PossibleMove {
         public static final int NEW_PIECE = -1;
 
@@ -116,7 +119,7 @@ public class Board {
     public static final byte GAME_STATE_DRAW = 3;
 
     private final Random random;
-    private final int boardSize;
+    private final long turnWaitingTimeoutMillis;
     private final int diagonalLength;
     private final int whitesDiagonalStart;
     private final int blacksSpawnPosition;
@@ -125,20 +128,21 @@ public class Board {
     private int moveNumber = 1;
     private int subMoveNumber = 1;
     private boolean whitesTurn = true;
-    private int lastDiceRollResult;
     private int lastCalculatedDestination;
+    private Pair<Integer, List<PossibleMove>> lastDiceRollResult;
     private int noMovesCounter;
+    private long lastActionTimestamp = System.currentTimeMillis();
     private byte gameState;
     private boolean lastChance;
     private boolean lastChanceActivated;
 
-    public Board(Random random, int boardSize) {
+    public Board(Random random, int boardSize, long turnWaitingTimeoutMillis) {
         if (boardSize <= 0 || boardSize % 2 != 0) {
             throw new IllegalArgumentException("Bad boardSize");
         }
 
         this.random = random;
-        this.boardSize = boardSize;
+        this.turnWaitingTimeoutMillis = turnWaitingTimeoutMillis;
         diagonalLength = boardSize / 2;
         whitesDiagonalStart = (boardSize - 1) * 4;
         blacksSpawnPosition = whitesDiagonalStart / 2;
@@ -146,12 +150,24 @@ public class Board {
     }
 
     public String serializePosition(boolean white) {
-        return "";
+        StringBuilder builder = new StringBuilder();
+        for (Piece piece : pieces) {
+            if (piece.whitePiece == white) {
+                builder.append(piece.position);
+                if (piece.revertedPosition && piece.position == blacksSpawnPosition) {
+                    builder.append('!');
+                }
+                builder.append(' ');
+            }
+        }
+
+        return builder.substring(0, builder.length() - 1); // omitting the last space character
     }
 
-    public Pair<Integer, List<PossibleMove>> rollDice() {
+    public DiceRolled rollDice() {
+        if (lastDiceRollResult != null) return null;
+
         int digit = 1 + random.nextInt(6);
-        lastDiceRollResult = digit;
 
         List<PossibleMove> possibleMoves = new ArrayList<>();
         if (isMovePossible(null, digit)) {
@@ -164,8 +180,13 @@ public class Board {
                 possibleMoves.add(new PossibleMove(piece, lastCalculatedDestination));
             }
         }
+        lastDiceRollResult = new Pair<>(digit, possibleMoves);
+        DiceRolled packet = new DiceRolled();
+        packet.value = (byte) digit;
 
-        return new Pair<>(digit, possibleMoves);
+        lastActionTimestamp = System.currentTimeMillis();
+
+        return packet;
     }
 
     /*
@@ -231,11 +252,69 @@ public class Board {
         return (whitesTurn ? 0 : blacksSpawnPosition);
     }
 
-    @SuppressWarnings("ExtractMethodRecommender")
-    public MakeMove makeMove(PossibleMove move) {
-        if (gameState != GAME_STATE_RUNNING) {
-            throw new IllegalStateException("Attempted to make a move in a finished game");
+    public Packet checkTimeout() {
+        if (System.currentTimeMillis() - lastActionTimestamp < turnWaitingTimeoutMillis) return null;
+
+        if (lastDiceRollResult == null) return rollDice();
+
+        return makeRandomMove();
+    }
+
+    private MakeMove makeRandomMove() {
+        List<PossibleMove> possibleMoves = lastDiceRollResult.second();
+        if (possibleMoves.isEmpty()) return makeMove(new NoMove(), true);
+
+        for (PossibleMove move : possibleMoves) {
+            if (move.isSpawningMove()) return makeMove(move, true);
         }
+        int randomIdx = random.nextInt(possibleMoves.size());
+
+        return makeMove(possibleMoves.get(randomIdx), true);
+    }
+
+    public MakeMove makeMove(MakeMove packet, boolean white) {
+        if (whitesTurn != white) return null;
+        if (lastDiceRollResult == null) return null;
+        if (packet.moveNumber != moveNumber || packet.subMoveNumber != subMoveNumber) return null;
+
+        List<PossibleMove> possibleMoves = lastDiceRollResult.second();
+
+        switch (packet.moveType) {
+            case MakeMove.MOVE_TYPE_GENERAL -> {
+                for (PossibleMove move : possibleMoves) {
+                    if (move.isSpawningMove()) continue;
+
+                    if (move.piece.position == packet.piecePosition) {
+                        return makeMove(move, false);
+                    }
+                }
+
+                return null;
+            }
+            case MakeMove.MOVE_TYPE_SPAWNING -> {
+                for (PossibleMove move : possibleMoves) {
+                    if (move.isSpawningMove() && move.destination == packet.piecePosition) {
+                        return makeMove(move, false);
+                    }
+                }
+
+                return null;
+            }
+            case MakeMove.MOVE_TYPE_NO_MOVE -> {
+                if (!possibleMoves.isEmpty()) return null;
+
+                return makeMove(new NoMove(), false);
+            }
+            default -> {
+                return null;
+            }
+        }
+    }
+
+    @SuppressWarnings("ExtractMethodRecommender")
+    private MakeMove makeMove(PossibleMove move, boolean automatic) {
+        if (gameState != GAME_STATE_RUNNING) return null;
+        int initialPosition = (move.piece != null ? move.piece.position : 0);
 
         move.makeMove();
 
@@ -294,9 +373,11 @@ public class Board {
         MakeMove packet = new MakeMove();
         packet.moveNumber = moveNumber;
         packet.subMoveNumber = subMoveNumber++;
+        packet.piecePosition = initialPosition;
         packet.moveType = move.getMoveType();
+        packet.automatic = automatic;
 
-        if (lastDiceRollResult != 6) { // rolling 6 gives you the right to make one more move
+        if (lastDiceRollResult.first() != 6) { // rolling 6 gives you the right to make one more move
             if (!whitesTurn) {
                 moveNumber++;
                 subMoveNumber = 1;
@@ -313,6 +394,8 @@ public class Board {
                 }
             }
         }
+        lastDiceRollResult = null;
+        lastActionTimestamp = System.currentTimeMillis();
 
         return packet;
     }
