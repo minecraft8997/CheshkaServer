@@ -47,7 +47,13 @@ public class Helper {
     }
 
     public static String getProperty(String key, String defaultValue) {
-        return System.getProperty(CheshkaServer.PROPERTY_PREFIX + key, defaultValue);
+        key = CheshkaServer.PROPERTY_PREFIX + key;
+        String result = System.getProperty(key, defaultValue);
+        if (CheshkaServer.SHOW_PROPERTIES) {
+            System.out.println("-D" + key + "=\"" + result + "\"" + (result.equals(defaultValue) ? " [default]" : ""));
+        }
+
+        return result;
     }
 
     public static void newThread(String name, Runnable task, boolean platformThread) {

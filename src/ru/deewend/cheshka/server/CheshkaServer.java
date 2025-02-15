@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class CheshkaServer {
     public static final int TICK_RATE_HZ = 20;
@@ -12,11 +13,8 @@ public class CheshkaServer {
     public static final int BOARD_SIZE;
     public static final int MAX_ONLINE_PLAYER_COUNT;
     public static final int MAX_ONLINE_PLAYER_COUNT_SOFT_KICK;
-    public static final int MAX_ROOM_COUNT;
-    public static final int PLAYER_TIME_S;
-    public static final int PLAYER_TIME_TICKS;
-    public static final int MAX_HOST_WAITING_TIME_S;
-    public static final int MAX_HOST_WAITING_TIME_TICKS;
+    public static final int MAX_IDLE_TIME_MILLIS;
+    public static final boolean SHOW_PROPERTIES;
     public static final byte ACTION_ACCEPT = 0;
     public static final byte ACTION_ACCEPT_AND_CLOSE_LATER = 1;
     public static final byte ACTION_CLOSE_NOW = 2;
@@ -28,6 +26,8 @@ public class CheshkaServer {
 
     static {
         Log.i("Initializing");
+        SHOW_PROPERTIES = Boolean.parseBoolean(
+                Helper.getProperty("showProperties", "false"));
         SERVER_PORT = Integer.parseInt(
                 Helper.getProperty("port", "23829")); // Math.abs("Cheshka".hashCode() % 65536)
         BOARD_SIZE = Integer.parseInt(
@@ -36,15 +36,10 @@ public class CheshkaServer {
                 Helper.getProperty("maxOnlinePlayerCount", "1500"));
         MAX_ONLINE_PLAYER_COUNT_SOFT_KICK = Integer.parseInt(
                 Helper.getProperty("maxOnlinePlayerCountSoftKick", "2000"));
-        MAX_ROOM_COUNT = Integer.parseInt(
-                Helper.getProperty("maxRoomCount", "700"));
-        PLAYER_TIME_S = Integer.parseInt(
-                Helper.getProperty("playerTimeSeconds", "1800"));
-        MAX_HOST_WAITING_TIME_S = Integer.parseInt(
-                Helper.getProperty("maxHostWaitingTimeSeconds", "900"));
+        int maxIdleTimeSeconds = Integer.parseInt(
+                Helper.getProperty("maxIdleTimeSeconds", "1800"));
 
-        PLAYER_TIME_TICKS = PLAYER_TIME_S * TICK_RATE_HZ;
-        MAX_HOST_WAITING_TIME_TICKS = MAX_HOST_WAITING_TIME_S * TICK_RATE_HZ;
+        MAX_IDLE_TIME_MILLIS = (int) TimeUnit.SECONDS.toMillis(maxIdleTimeSeconds);
     }
 
     public static void main(String[] args) throws Throwable {
@@ -61,7 +56,7 @@ public class CheshkaServer {
         while (true) {
             Socket socket = listeningSocket.accept();
             socket.setTcpNoDelay(true);
-            socket.setSoTimeout(PLAYER_TIME_S * 1000 + (5 * 60 * 1000)); // adding 5 minutes
+            socket.setSoTimeout(MAX_IDLE_TIME_MILLIS);
 
             byte action;
             synchronized (this) {
