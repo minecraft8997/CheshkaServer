@@ -25,20 +25,16 @@ public class CheshkaServer {
     private final Set<GameRoom> gameRooms = new HashSet<>();
 
     static {
-        SHOW_PROPERTIES = Boolean.parseBoolean(
-                Helper.getProperty("showProperties", "false"));
+        SHOW_PROPERTIES = Boolean.parseBoolean(Helper.getProperty("showProperties", "false"));
 
         Log.i("Initializing");
         SERVER_PORT = Integer.parseInt(
                 Helper.getProperty("port", "23829")); // Math.abs("Cheshka".hashCode() % 65536)
-        BOARD_SIZE = Integer.parseInt(
-                Helper.getProperty("boardSize", "8"));
-        MAX_ONLINE_PLAYER_COUNT = Integer.parseInt(
-                Helper.getProperty("maxOnlinePlayerCount", "1500"));
+        BOARD_SIZE = Integer.parseInt(Helper.getProperty("boardSize", "8"));
+        MAX_ONLINE_PLAYER_COUNT = Integer.parseInt(Helper.getProperty("maxOnlinePlayerCount", "1500"));
         MAX_ONLINE_PLAYER_COUNT_SOFT_KICK = Integer.parseInt(
                 Helper.getProperty("maxOnlinePlayerCountSoftKick", "2000"));
-        int maxIdleTimeSeconds = Integer.parseInt(
-                Helper.getProperty("maxIdleTimeSeconds", "1800"));
+        int maxIdleTimeSeconds = Integer.parseInt(Helper.getProperty("maxIdleTimeSeconds", "1800"));
 
         MAX_IDLE_TIME_MILLIS = (int) TimeUnit.SECONDS.toMillis(maxIdleTimeSeconds);
     }

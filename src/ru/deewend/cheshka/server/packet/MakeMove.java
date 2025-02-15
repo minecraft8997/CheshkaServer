@@ -2,6 +2,7 @@ package ru.deewend.cheshka.server.packet;
 
 import ru.deewend.cheshka.server.Packet;
 import ru.deewend.cheshka.server.annotation.Clientbound;
+import ru.deewend.cheshka.server.annotation.Order;
 import ru.deewend.cheshka.server.annotation.Serverbound;
 
 @Serverbound
@@ -11,11 +12,11 @@ public class MakeMove extends Packet {
     public static final byte MOVE_TYPE_SPAWNING = 1;
     public static final byte MOVE_TYPE_NO_MOVE = 2;
 
-    public int moveNumber;
-    public int subMoveNumber;
-    public int piecePosition;
-    public byte moveType;
-    public boolean automatic;
+    @Order(no = 1) public int moveNumber;
+    @Order(no = 2) public int subMoveNumber;
+    @Order(no = 3) public int piecePosition;
+    @Order(no = 4) public byte moveType;
+    @Order(no = 5) public boolean automatic;
 
     @Override
     public int getId() {

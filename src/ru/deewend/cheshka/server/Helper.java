@@ -1,14 +1,17 @@
 package ru.deewend.cheshka.server;
 
+import ru.deewend.cheshka.server.annotation.Order;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.UUID;
+import java.util.*;
 import java.util.zip.CRC32;
 
 public class Helper {
@@ -117,16 +120,19 @@ public class Helper {
         writeByteArray(stream, stream0.toByteArray());
     }
 
-    public static byte[] constructCachedPacket(Providable<DataOutputStream> constructor) {
-        try (ByteArrayOutputStream byteStream0 = new ByteArrayOutputStream()) {
-            DataOutputStream byteStream = new DataOutputStream(byteStream0);
-
-            constructor.provide(byteStream);
-
-            return byteStream0.toByteArray();
-        } catch (Exception e) { // should never happen tho
-            throw new RuntimeException(e);
+    public static List<Field> fixOrder(Field[] fields) {
+        List<Field> annotatedOnly = new ArrayList<>();
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(Order.class)) annotatedOnly.add(field);
         }
+        annotatedOnly.sort((first, second) -> {
+            int firstNo = first.getAnnotation(Order.class).no();
+            int secondNo = second.getAnnotation(Order.class).no();
+
+            return firstNo - secondNo;
+        });
+
+        return annotatedOnly;
     }
 
     public static String getClassName(Object object) {

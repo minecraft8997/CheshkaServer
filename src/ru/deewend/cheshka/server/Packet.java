@@ -57,7 +57,7 @@ public abstract class Packet {
         }
         Packet packet = (Packet) clazz.getDeclaredConstructor().newInstance();
 
-        for (Field field : clazz.getFields()) {
+        for (Field field : Helper.fixOrder(clazz.getFields())) {
             if (shouldContinue(field, packet, clazz)) continue;
 
             Class<?> type = field.getType();
@@ -94,7 +94,7 @@ public abstract class Packet {
             stream.writeByte(packetId);
 
             Class<?> clazz = getClass();
-            for (Field field : clazz.getFields()) {
+            for (Field field : Helper.fixOrder(clazz.getFields())) {
                 if (shouldContinue(field, this, clazz)) continue;
 
                 Class<?> type = field.getType();
