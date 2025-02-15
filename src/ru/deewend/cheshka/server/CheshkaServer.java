@@ -32,7 +32,7 @@ public class CheshkaServer {
         SERVER_PORT = Integer.parseInt(
                 Helper.getProperty("port", "23829")); // Math.abs("Cheshka".hashCode() % 65536)
         BOARD_SIZE = Integer.parseInt(
-                Helper.getProperty("boardSize", "23829"));
+                Helper.getProperty("boardSize", "8"));
         MAX_ONLINE_PLAYER_COUNT = Integer.parseInt(
                 Helper.getProperty("maxOnlinePlayerCount", "1500"));
         MAX_ONLINE_PLAYER_COUNT_SOFT_KICK = Integer.parseInt(
