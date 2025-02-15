@@ -14,7 +14,7 @@ public class GameRoom {
     public static final int WAITING_FOR_OPPONENT_TIMEOUT_SECONDS =
             Integer.parseInt(Helper.getProperty("waitingForOpponentTimeoutSeconds", "900"));
     public static final int TURN_WAITING_TIMEOUT_SECONDS =
-            Integer.parseInt(Helper.getProperty("turnWaitingTimeout", "10"));
+            Integer.parseInt(Helper.getProperty("turnWaitingTimeout", "8"));
 
     private static final int WAITING_FOR_OPPONENT_TIMEOUT_TICKS =
             WAITING_FOR_OPPONENT_TIMEOUT_SECONDS * CheshkaServer.TICK_RATE_HZ;
@@ -91,7 +91,7 @@ public class GameRoom {
         }
         sendBothAsyncIfNonNull(board.checkTimeout());
 
-        return true;
+        return board.getGameState() == Board.GAME_STATE_RUNNING;
     }
 
     public boolean reconnectPlayer(ClientHandler player) {
