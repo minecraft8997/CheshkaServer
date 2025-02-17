@@ -29,7 +29,6 @@ public class ClientHandler implements Runnable {
     private volatile UUID clientId;
     private final Queue<Packet> packetQueue = new ArrayDeque<>();
     final Queue<Packet> gameRoomPacketQueue = new ArrayDeque<>();
-    private boolean host;
     private boolean matchmaking;
     GameRoom gameRoom;
 
@@ -297,7 +296,7 @@ public class ClientHandler implements Runnable {
         }
 
         if (expecting != null && !expecting.isInstance(received)) {
-            throw new IOException("expected to receive " +
+            throw new IOException("Expected to receive " +
                     getClassName(expecting) + " packet, got" + getClassName(received));
         }
     }

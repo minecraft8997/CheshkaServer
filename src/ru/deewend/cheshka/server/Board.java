@@ -280,7 +280,7 @@ public class Board {
         List<PossibleMove> possibleMoves = lastDiceRollResult.second();
 
         switch (packet.moveType) {
-            case MakeMove.MOVE_TYPE_GENERAL -> {
+            case MakeMove.MOVE_TYPE_GENERAL: {
                 for (PossibleMove move : possibleMoves) {
                     if (move.isSpawningMove()) continue;
 
@@ -291,7 +291,7 @@ public class Board {
 
                 return null;
             }
-            case MakeMove.MOVE_TYPE_SPAWNING -> {
+            case MakeMove.MOVE_TYPE_SPAWNING: {
                 for (PossibleMove move : possibleMoves) {
                     if (move.isSpawningMove() && move.destination == packet.piecePosition) {
                         return makeMove(move, false);
@@ -300,12 +300,12 @@ public class Board {
 
                 return null;
             }
-            case MakeMove.MOVE_TYPE_NO_MOVE -> {
+            case MakeMove.MOVE_TYPE_NO_MOVE: {
                 if (!possibleMoves.isEmpty()) return null;
 
                 return makeMove(new NoMove(), false);
             }
-            default -> {
+            default: {
                 return null;
             }
         }
