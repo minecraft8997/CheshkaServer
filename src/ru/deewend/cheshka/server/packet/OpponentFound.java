@@ -11,10 +11,12 @@ public class OpponentFound extends Packet {
     @Order(no = 2) public int boardSize;
     @Order(no = 3) public int secondsForTurn;
     @Order(no = 4) public final int noMoveDrawThreshold = Board.NO_MOVE_DRAW_THRESHOLD;
-    @Order(no = 5) public String myPiecePositions;
-    @Order(no = 6) public String opponentPiecePositions;
-    @Order(no = 7) public boolean whiteColor;
-    @Order(no = 8) public boolean myTurnNow;
+    @Order(no = 5) public int moveNumber;
+    @Order(no = 6) public int subMoveNumber;
+    @Order(no = 7) public String myPiecePositions;
+    @Order(no = 8) public String opponentPiecePositions;
+    @Order(no = 9) public boolean whiteColor;
+    @Order(no = 10) public boolean myTurnNow;
 
     @Override
     public int getId() {

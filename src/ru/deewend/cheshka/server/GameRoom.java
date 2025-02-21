@@ -1,9 +1,6 @@
 package ru.deewend.cheshka.server;
 
-import ru.deewend.cheshka.server.packet.MakeMove;
-import ru.deewend.cheshka.server.packet.OpponentFound;
-import ru.deewend.cheshka.server.packet.OpponentNotFound;
-import ru.deewend.cheshka.server.packet.RollDice;
+import ru.deewend.cheshka.server.packet.*;
 
 import java.util.Queue;
 import java.util.Random;
@@ -135,6 +132,8 @@ public class GameRoom {
         opponentFound.opponentDisplayName = opponent.getUsername();
         opponentFound.boardSize = CheshkaServer.BOARD_SIZE;
         opponentFound.secondsForTurn = TURN_WAITING_TIMEOUT_SECONDS;
+        opponentFound.moveNumber = board.getMoveNumber();
+        opponentFound.subMoveNumber = board.getSubMoveNumber();
         boolean myColor = ((handler == hostPlayer) == hostColor); // (handler == hostPlayer ? hostColor : !hostColor)
         opponentFound.myPiecePositions = board.serializePosition(myColor);
         opponentFound.opponentPiecePositions = board.serializePosition(!myColor);
@@ -142,6 +141,14 @@ public class GameRoom {
         opponentFound.myTurnNow = (handler == whoseTurn);
 
         handler.externalSendPacket(opponentFound);
+
+        Integer lastDiceRollResult;
+        if (opponentFound.myTurnNow && (lastDiceRollResult = board.getLastDiceRollResult()) != null) {
+            DiceRolled diceRolled = new DiceRolled();
+            diceRolled.value = lastDiceRollResult.byteValue();
+
+            handler.externalSendPacket(diceRolled);
+        }
     }
 
     private void sendBothAsyncIfNonNull(Packet packet) {

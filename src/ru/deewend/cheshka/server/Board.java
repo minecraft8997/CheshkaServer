@@ -12,7 +12,6 @@ public class Board {
     public static class Piece {
         private final boolean whitePiece;
         private int position;
-        private int movesMade;
         private boolean revertedPosition;
 
         public Piece(boolean whitePiece) {
@@ -31,14 +30,6 @@ public class Board {
             if (position < this.position) revertedPosition = true;
 
             this.position = position;
-        }
-
-        public int getMovesMade() {
-            return movesMade;
-        }
-
-        public void setMovesMade(int movesMade) {
-            this.movesMade = movesMade;
         }
 
         public boolean hasRevertedPosition() {
@@ -418,5 +409,17 @@ public class Board {
 
     public byte getGameState() {
         return gameState;
+    }
+
+    public int getMoveNumber() {
+        return moveNumber;
+    }
+
+    public int getSubMoveNumber() {
+        return subMoveNumber;
+    }
+
+    public Integer getLastDiceRollResult() {
+        return (lastDiceRollResult != null ? lastDiceRollResult.first() : null);
     }
 }
