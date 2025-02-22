@@ -14,9 +14,13 @@ public class MakeMove extends Packet {
 
     @Order(no = 1) public int moveNumber;
     @Order(no = 2) public int subMoveNumber;
-    @Order(no = 3) public int piecePosition;
-    @Order(no = 4) public byte moveType;
-    @Order(no = 5) public boolean automatic;
+    /*
+     * Ignored by the server-side, only useful for the client.
+     */
+    @Order(no = 3) public boolean whitesMove;
+    @Order(no = 4) public int piecePosition;
+    @Order(no = 5) public byte moveType;
+    @Order(no = 6) public boolean automatic;
 
     @Override
     public int getId() {

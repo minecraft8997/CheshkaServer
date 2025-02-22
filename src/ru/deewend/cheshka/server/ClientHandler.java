@@ -54,6 +54,8 @@ public class ClientHandler implements Runnable {
         } catch (Throwable th) {
             t = th;
         } finally {
+            cheshkaServer.accessAuthenticatedUsers(authenticatedUsers -> authenticatedUsers.remove(this));
+
             if (username != null) {
                 String logoutMessage = username + " disconnected";
 
@@ -199,18 +201,17 @@ public class ClientHandler implements Runnable {
 
         this.username = username;
         this.clientId = clientId;
-        Log.i(username + " connected");
+        cheshkaServer.accessAuthenticatedUsers(authenticatedUsers -> authenticatedUsers.add(this));
+
+        Log.i(username + " connected (" + socket.getInetAddress().getHostAddress() + ")");
 
         cheshkaServer.accessGameRooms(gameRooms -> {
             for (GameRoom room : gameRooms) {
                 if (room.reconnectPlayer(this)) return;
             }
-            HomeData homeData = new HomeData();
-            homeData.onlinePlayerCount = cheshkaServer.getOnlinePlayerCount();
-            homeData.activeGamesCount = gameRooms.size();
-
-            externalSendPacket(homeData);
         });
+
+        externalSendPacket(Helper.craftHomeData(cheshkaServer));
 
         while (true) {
             receivePacket(null);

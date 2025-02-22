@@ -1,6 +1,7 @@
 package ru.deewend.cheshka.server;
 
 import ru.deewend.cheshka.server.annotation.Order;
+import ru.deewend.cheshka.server.packet.HomeData;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -172,6 +173,14 @@ public class Helper {
 
     public static Pair<BufferedImage, String> generateCaptcha() {
         return new Pair<>(new BufferedImage(320, 240, BufferedImage.TYPE_INT_ARGB), "0000");
+    }
+
+    public static HomeData craftHomeData(CheshkaServer server) {
+        HomeData homeData = new HomeData();
+        homeData.onlinePlayerCount = server.getOnlinePlayerCount();
+        server.accessGameRooms(gameRooms -> homeData.activeGamesCount = gameRooms.size());
+
+        return homeData;
     }
 
     public static boolean checkInvitationCode(String code) {

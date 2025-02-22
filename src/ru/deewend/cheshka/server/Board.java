@@ -364,6 +364,7 @@ public class Board {
         MakeMove packet = new MakeMove();
         packet.moveNumber = moveNumber;
         packet.subMoveNumber = subMoveNumber++;
+        packet.whitesMove = whitesTurn;
         packet.piecePosition = initialPosition;
         packet.moveType = move.getMoveType();
         packet.automatic = automatic;

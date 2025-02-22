@@ -71,6 +71,9 @@ public class GameRoom {
             sendOpponentFound(hostPlayer);
             sendOpponentFound(opponentPlayer);
             whoseTurn = (hostColor ? hostPlayer : opponentPlayer);
+
+            Log.i("A game between " +
+                    hostPlayer.getUsername() + " and " + opponentPlayer.getUsername() + " was started");
         }
         boolean whitesTurn = ((whoseTurn == hostPlayer) == hostColor);
         //noinspection SynchronizeOnNonFinalField

@@ -23,6 +23,7 @@ public class CheshkaServer {
     private final Random random = new Random();
     private volatile int onlinePlayerCount;
     private final Set<GameRoom> gameRooms = new HashSet<>();
+    private final Set<ClientHandler> authenticatedUsers = new HashSet<>();
 
     static {
         SHOW_PROPERTIES = Boolean.parseBoolean(Helper.getProperty("showProperties", "false"));
@@ -92,9 +93,18 @@ public class CheshkaServer {
     }
 
     public void accessGameRooms(Helper.Providable<Set<GameRoom>> providable) {
-        synchronized (gameRooms) {
+        provide(gameRooms, providable);
+    }
+
+    public void accessAuthenticatedUsers(Helper.Providable<Set<ClientHandler>> providable) {
+        provide(authenticatedUsers, providable);
+    }
+
+    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+    private <T> void provide(T object, Helper.Providable<T> providable) {
+        synchronized (object) {
             try {
-                providable.provide(gameRooms);
+                providable.provide(object);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
