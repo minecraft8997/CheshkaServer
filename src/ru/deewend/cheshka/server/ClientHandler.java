@@ -5,6 +5,7 @@ import ru.deewend.cheshka.server.packet.*;
 
 import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -56,8 +57,23 @@ public class ClientHandler implements Runnable {
             if (username != null) {
                 String logoutMessage = username + " disconnected";
 
-                if (t == null) Log.i(logoutMessage);
-                else           Log.w(logoutMessage, t);
+                if (t == null) {
+                    Log.i(logoutMessage);
+                } else {
+                    String reason = switch (t) {
+                        case @SuppressWarnings("unused") EOFException eof -> "EOF";
+                        case @SuppressWarnings("unused") IOException io -> "I/O issue";
+                        case @SuppressWarnings("unused") Exception exception -> "exception";
+                        default -> "error";
+                    };
+                    String fullMessage = logoutMessage + " (" + reason + ")";
+
+                    if (t instanceof IOException /* including EOF */) {
+                        Log.i(fullMessage);
+                    } else {
+                        Log.w(fullMessage, t);
+                    }
+                }
             }
 
             cheshkaServer.decrementOnlinePlayerCount();
@@ -292,7 +308,7 @@ public class ClientHandler implements Runnable {
         try {
             received = Packet.deserialize(inputStream);
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Sending a packet", e);
+            throw new RuntimeException("Receiving a packet", e);
         }
 
         if (expecting != null && !expecting.isInstance(received)) {
