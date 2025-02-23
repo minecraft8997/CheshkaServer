@@ -249,6 +249,8 @@ public class ClientHandler implements Runnable {
                     }
                     sendPacket(matchmakingStarted);
                 }
+
+                continue;
             }
             sendDisconnect("Unexpected packet");
 
