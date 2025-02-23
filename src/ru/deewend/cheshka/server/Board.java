@@ -141,6 +141,8 @@ public class Board {
     }
 
     public String serializePosition(boolean white) {
+        if (pieces.isEmpty()) return Helper.DEFAULT_STRING_VALUE;
+
         StringBuilder builder = new StringBuilder();
         for (Piece piece : pieces) {
             if (piece.whitePiece == white) {

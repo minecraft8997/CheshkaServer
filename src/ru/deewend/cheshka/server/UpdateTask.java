@@ -33,10 +33,10 @@ public class UpdateTask implements Runnable {
                     Thread.sleep(1);
                 }
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (Throwable t) {
+            if (t instanceof InterruptedException) Thread.currentThread().interrupt();
 
-            Log.s("InterruptedException in UpdateTask", e);
+            Log.s("An error occurred in UpdateTask", t);
         } finally {
             Log.s("The server ticking thread has stopped. The application will be terminated");
 
