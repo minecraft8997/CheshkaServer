@@ -52,6 +52,7 @@ public class GameRoom {
         this.hostColor = random.nextBoolean();
     }
 
+    @SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter", "SynchronizeOnNonFinalField"})
     public boolean tick() {
         if (matchmaking) {
             if (++waitingForOpponentTicks >= WAITING_FOR_OPPONENT_TIMEOUT_TICKS) {
@@ -75,8 +76,8 @@ public class GameRoom {
             Log.i("A game between " +
                     hostPlayer.getUsername() + " and " + opponentPlayer.getUsername() + " was started");
         }
-        boolean whitesTurn = ((whoseTurn == hostPlayer) == hostColor);
-        //noinspection SynchronizeOnNonFinalField
+        boolean hostPlayersTurn = (whoseTurn == hostPlayer);
+        boolean whitesTurn = (hostPlayersTurn == hostColor);
         synchronized (whoseTurn) {
             Queue<Packet> queue = whoseTurn.gameRoomPacketQueue;
             while (!queue.isEmpty()) {
@@ -86,12 +87,30 @@ public class GameRoom {
                     sendBothAsyncIfNonNull(board.rollDice());
                 } else if (packet instanceof MakeMove makeMove) {
                     sendBothAsyncIfNonNull(board.makeMove(makeMove, whitesTurn));
+                } else {
+                    resign((Resign) packet, whitesTurn);
+                }
+            }
+        }
+        ClientHandler currentOpponent = (hostPlayersTurn ? opponentPlayer : hostPlayer);
+        synchronized (currentOpponent) {
+            for (Packet packet : currentOpponent.gameRoomPacketQueue) {
+                if (packet instanceof Resign) {
+                    resign((Resign) packet, !whitesTurn);
+
+                    break;
                 }
             }
         }
         sendBothAsyncIfNonNull(board.checkTimeout());
 
         return board.getGameState() == Board.GAME_STATE_RUNNING;
+    }
+
+    private void resign(Resign resign, boolean white) {
+        sendBothAsyncIfNonNull(resign);
+
+        board.resign(white);
     }
 
     public boolean reconnectPlayer(ClientHandler player) {

@@ -15,14 +15,17 @@ public abstract class Packet {
     private static final Class[] serverboundPIDMappings;
 
     static {
-        serverboundPIDMappings = new Class[5];
+        serverboundPIDMappings = new Class[8];
         serverboundPIDMappings[0x00] = ClientHello.class;
         serverboundPIDMappings[0x01] = ClientIdentification.class;
         serverboundPIDMappings[0x02] = InitiateMatchmaking.class;
         serverboundPIDMappings[0x03] = RollDice.class;
-        serverboundPIDMappings[0x04] = MakeMove.class;
+        serverboundPIDMappings[0x06] = MakeMove.class;
+        serverboundPIDMappings[0x07] = Resign.class;
 
         for (Class<?> clazz : serverboundPIDMappings) {
+            if (clazz == null) continue;
+
             if (!clazz.isAnnotationPresent(Serverbound.class)) {
                 throw new RuntimeException(clazz.getName() +
                         " packet is expected to be annotated as @Serverbound");

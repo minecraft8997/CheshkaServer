@@ -124,6 +124,7 @@ public class Board {
     private int noMovesCounter;
     private long lastActionTimestamp = System.currentTimeMillis();
     private byte gameState;
+    private boolean resigned;
     private boolean lastChance;
     private boolean lastChanceActivated;
 
@@ -141,8 +142,6 @@ public class Board {
     }
 
     public String serializePosition(boolean white) {
-        if (pieces.isEmpty()) return Helper.DEFAULT_STRING_VALUE;
-
         StringBuilder builder = new StringBuilder();
         for (Piece piece : pieces) {
             if (piece.whitePiece == white) {
@@ -153,6 +152,7 @@ public class Board {
                 builder.append(' ');
             }
         }
+        if (builder.isEmpty()) return Helper.DEFAULT_STRING_VALUE;
 
         return builder.substring(0, builder.length() - 1); // omitting the last space character
     }
@@ -408,6 +408,16 @@ public class Board {
         if (found == null) return false;
 
         return found.whitePiece == whiteRequired;
+    }
+
+    public void resign(boolean white) {
+        if (resigned) {
+            gameState = GAME_STATE_DRAW; // both players resigned nearly at the same moment
+
+            return;
+        }
+        gameState = (white ? GAME_STATE_BLACK_WON : GAME_STATE_WHITE_WON);
+        resigned = true;
     }
 
     public byte getGameState() {

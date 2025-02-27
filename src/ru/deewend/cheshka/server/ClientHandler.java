@@ -221,7 +221,9 @@ public class ClientHandler implements Runnable {
 
                 clearQueue();
             }
-            if (gameRoom != null && !matchmaking && (received instanceof RollDice || received instanceof MakeMove)) {
+            if (gameRoom != null && !matchmaking &&
+                    (received instanceof RollDice || received instanceof MakeMove || received instanceof Resign)
+            ) {
                 queueCurrentPacket();
 
                 continue;

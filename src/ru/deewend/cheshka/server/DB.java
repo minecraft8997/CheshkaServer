@@ -175,12 +175,14 @@ public class DB {
 
         synchronized (this) {
             try (DataInputStream stream = openDBInputStream()) {
-                long currentMost = stream.readLong();
-                long currentLeast = stream.readLong();
-                long timestamp = stream.readLong();
+                while (true) {
+                    long currentMost = stream.readLong();
+                    long currentLeast = stream.readLong();
+                    long timestamp = stream.readLong();
 
-                if (most == currentMost && least == currentLeast) {
-                    return System.currentTimeMillis() - timestamp < MAX_CAPTCHA_VERIFICATION_AGE_MS;
+                    if (most == currentMost && least == currentLeast) {
+                        return System.currentTimeMillis() - timestamp < MAX_CAPTCHA_VERIFICATION_AGE_MS;
+                    }
                 }
             } catch (IOException e) {
                 if (!(e instanceof EOFException || e instanceof NoSuchFileException)) Log.w("Reading DB", e);
