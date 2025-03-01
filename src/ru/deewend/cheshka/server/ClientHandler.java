@@ -30,8 +30,8 @@ public class ClientHandler implements Runnable {
     private volatile UUID clientId;
     private final Queue<Packet> packetQueue = new ArrayDeque<>();
     final Queue<Packet> gameRoomPacketQueue = new ArrayDeque<>();
-    private boolean matchmaking;
-    GameRoom gameRoom;
+    volatile boolean matchmaking;
+    volatile GameRoom gameRoom;
 
     public ClientHandler(CheshkaServer cheshkaServer, Socket socket) {
         this(cheshkaServer, socket, false);
@@ -221,9 +221,7 @@ public class ClientHandler implements Runnable {
 
                 clearQueue();
             }
-            if (gameRoom != null && !matchmaking &&
-                    (received instanceof RollDice || received instanceof MakeMove || received instanceof Resign)
-            ) {
+            if (received instanceof RollDice || received instanceof MakeMove || received instanceof Resign) {
                 queueCurrentPacket();
 
                 continue;
@@ -254,7 +252,7 @@ public class ClientHandler implements Runnable {
 
                 continue;
             }
-            sendDisconnect("Unexpected packet");
+            sendDisconnect("Unexpected packet: " + received.getClass().getName());
 
             break;
         }

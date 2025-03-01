@@ -76,6 +76,11 @@ public class GameRoom {
             Log.i("A game between " +
                     hostPlayer.getUsername() + " and " + opponentPlayer.getUsername() + " was started");
         }
+        hostPlayer.gameRoom = this;
+        hostPlayer.matchmaking = false;
+        opponentPlayer.gameRoom = this;
+        opponentPlayer.matchmaking = false;
+
         boolean hostPlayersTurn = (whoseTurn == hostPlayer);
         boolean whitesTurn = (hostPlayersTurn == hostColor);
         synchronized (whoseTurn) {

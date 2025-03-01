@@ -96,28 +96,22 @@ public class DB {
             }
         }
         if (!scan) {
-            try {
-                if (entries != expectedEntriesCount) {
-                    Log.w("Cancelling the cleanup, found " + entries + " entries " +
-                            "when the expected count was " + expectedEntriesCount);
+            if (entries != expectedEntriesCount) {
+                Log.w("Cancelling the cleanup, found " + entries + " entries " +
+                        "when the expected count was " + expectedEntriesCount);
 
-                    return;
-                }
-                if (!dbFile.delete()) {
-                    Log.w("Failed to delete the outdated DB file. This might affect the " +
-                            "result of the further rename operation against the newly created DB file");
-                }
-                if (!dbTmpFile.renameTo(dbFile)) {
-                    Log.w("Failed to replace the old DB with the cleaned one");
-
-                    return;
-                }
-                Log.i("Successful cleanup");
-            } finally {
-                if (!dbTmpFile.delete()) {
-                    Log.w("Failed to remove the temporary DB file");
-                }
+                return;
             }
+            if (!dbFile.delete()) {
+                Log.w("Failed to delete the outdated DB file. This might affect the " +
+                        "result of the further rename operation against the newly created DB file");
+            }
+            if (!dbTmpFile.renameTo(dbFile)) {
+                Log.w("Failed to replace the old DB with the cleaned one");
+
+                return;
+            }
+            Log.i("Successful cleanup");
 
             return;
         }
