@@ -160,7 +160,7 @@ public class Board {
     public DiceRolled rollDice() {
         if (lastDiceRollResult != null) return null;
 
-        int digit = 1 + random.nextInt(6);
+        int digit = 6;
 
         List<PossibleMove> possibleMoves = new ArrayList<>();
         if (isMovePossible(null, digit)) {
@@ -307,7 +307,7 @@ public class Board {
     @SuppressWarnings("ExtractMethodRecommender")
     private MakeMove makeMove(PossibleMove move, boolean automatic) {
         if (gameState != GAME_STATE_RUNNING) return null;
-        int initialPosition = (move.piece != null ? move.piece.position : 0);
+        int initialPosition = (move.piece != null ? move.piece.position : move.getDestination());
 
         move.makeMove();
 

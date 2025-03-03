@@ -69,9 +69,9 @@ public class GameRoom {
         if (board == null) {
             board = new Board(random, CheshkaServer.BOARD_SIZE, TURN_WAITING_TIMEOUT_MILLIS);
 
+            whoseTurn = (hostColor ? hostPlayer : opponentPlayer);
             sendOpponentFound(hostPlayer);
             sendOpponentFound(opponentPlayer);
-            whoseTurn = (hostColor ? hostPlayer : opponentPlayer);
 
             Log.i("A game between " +
                     hostPlayer.getUsername() + " and " + opponentPlayer.getUsername() + " was started");
@@ -137,6 +137,7 @@ public class GameRoom {
         } else {
             opponentPlayer = player;
         }
+        player.gameRoom = this;
         if (whoseTurn == toDisconnect) whoseTurn = player;
 
         sendOpponentFound(player);

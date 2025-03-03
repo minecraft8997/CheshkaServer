@@ -28,7 +28,6 @@ public class ClientHandler implements Runnable {
     private Packet received;
     private volatile String username;
     private volatile UUID clientId;
-    private final Queue<Packet> packetQueue = new ArrayDeque<>();
     final Queue<Packet> gameRoomPacketQueue = new ArrayDeque<>();
     volatile boolean matchmaking;
     volatile GameRoom gameRoom;
@@ -221,7 +220,10 @@ public class ClientHandler implements Runnable {
 
                 clearQueue();
             }
-            if (received instanceof RollDice || received instanceof MakeMove || received instanceof Resign) {
+            boolean resign = (received instanceof Resign);
+            if (gameRoom != null && !matchmaking &&
+                    (received instanceof RollDice || received instanceof MakeMove || resign)
+            ) {
                 queueCurrentPacket();
 
                 continue;
@@ -252,6 +254,8 @@ public class ClientHandler implements Runnable {
 
                 continue;
             }
+            if (resign) continue;
+
             sendDisconnect("Unexpected packet: " + received.getClass().getName());
 
             break;
@@ -259,16 +263,16 @@ public class ClientHandler implements Runnable {
     }
 
     private synchronized void queueCurrentPacket() {
-        if (packetQueue.size() >= MAX_PACKET_COUNT_IN_QUEUE) {
+        if (gameRoomPacketQueue.size() >= MAX_PACKET_COUNT_IN_QUEUE) {
             disconnectAsync("Too many packets");
 
             return;
         }
-        packetQueue.add(received);
+        gameRoomPacketQueue.add(received);
     }
 
     private synchronized void clearQueue() {
-        packetQueue.clear();
+        gameRoomPacketQueue.clear();
     }
 
     private void sendDisconnect(String reason) throws IOException {
