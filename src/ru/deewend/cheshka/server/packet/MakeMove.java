@@ -5,8 +5,8 @@ import ru.deewend.cheshka.server.annotation.Clientbound;
 import ru.deewend.cheshka.server.annotation.Order;
 import ru.deewend.cheshka.server.annotation.Serverbound;
 
-@Serverbound
 @Clientbound
+@Serverbound
 public class MakeMove extends Packet {
     public static final byte MOVE_TYPE_GENERAL = 0;
     public static final byte MOVE_TYPE_SPAWNING = 1;
@@ -20,6 +20,9 @@ public class MakeMove extends Packet {
     @Order(no = 3) public boolean whitesMove;
     @Order(no = 4) public int piecePosition;
     @Order(no = 5) public byte moveType;
+    /*
+     * Also should be ignored by the server-side.
+     */
     @Order(no = 6) public boolean automatic;
 
     @Override
