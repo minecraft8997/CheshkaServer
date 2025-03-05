@@ -1,9 +1,13 @@
 package ru.deewend.cheshka.server;
 
+import nl.captcha.Captcha;
+import nl.captcha.backgrounds.FlatColorBackgroundProducer;
+import nl.captcha.text.renderer.DefaultWordRenderer;
 import ru.deewend.cheshka.server.annotation.Order;
 import ru.deewend.cheshka.server.packet.HomeData;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Field;
@@ -13,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.List;
 import java.util.zip.CRC32;
 
 public class Helper {
@@ -172,7 +177,21 @@ public class Helper {
     }
 
     public static Pair<BufferedImage, String> generateCaptcha() {
-        return new Pair<>(new BufferedImage(320, 240, BufferedImage.TYPE_INT_ARGB), "0000");
+        Captcha.Builder captchaBuilder = new Captcha.Builder(480, 320)
+                .addText(new DefaultWordRenderer(
+                        List.of(Color.BLACK),
+                        List.of(
+                                new Font("Arial", Font.BOLD, 144),
+                                new Font("Courier", Font.BOLD, 144)
+                        )
+                ))
+                .addBackground(new FlatColorBackgroundProducer(Color.WHITE));
+
+        int noiseIterations = (Math.random() < 0.5D ? 16 : 32);
+        for (int i = 0; i < noiseIterations; i++) captchaBuilder = captchaBuilder.addNoise();
+        Captcha captcha = captchaBuilder.build();
+
+        return new Pair<>(captcha.getImage(), captcha.getAnswer());
     }
 
     public static HomeData craftHomeData(CheshkaServer server) {
