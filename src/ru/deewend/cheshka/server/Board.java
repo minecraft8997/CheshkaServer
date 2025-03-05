@@ -248,9 +248,14 @@ public class Board {
     }
 
     public Packet checkTimeout() {
-        if (System.currentTimeMillis() - lastActionTimestamp < turnWaitingTimeoutMillis) return null;
+        long timeout = turnWaitingTimeoutMillis;
+        boolean hasRollResult = (lastDiceRollResult != null);
+        if (hasRollResult && lastDiceRollResult.second().isEmpty()) { // is the possible moves list empty?
+            timeout /= 2L;
+        }
+        if (System.currentTimeMillis() - lastActionTimestamp < timeout) return null;
 
-        if (lastDiceRollResult == null) return rollDice();
+        if (!hasRollResult) return rollDice();
 
         return makeRandomMove();
     }
