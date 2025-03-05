@@ -172,7 +172,7 @@ public class ClientHandler implements Runnable {
         if (CheshkaServer.USE_CAPTCHA && (noClientId || !DB.getInstance().isUserVerified(clientId))) {
             int attempts = 0;
             while (attempts++ < CAPTCHA_ATTEMPTS) {
-                Pair<BufferedImage, String> captcha = Helper.generateCaptcha();
+                Pair<BufferedImage, String> captcha = CaptchaProvider.generateCaptcha();
 
                 IdentificationResult challengeRequired = new IdentificationResult();
                 challengeRequired.success = false;
