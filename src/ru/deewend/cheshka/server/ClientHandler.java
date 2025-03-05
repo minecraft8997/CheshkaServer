@@ -320,7 +320,7 @@ public class ClientHandler implements Runnable {
 
         if (expecting != null && !expecting.isInstance(received)) {
             throw new IOException("Expected to receive " +
-                    getClassName(expecting) + " packet, got" + getClassName(received));
+                    getClassName(expecting) + " packet, got " + getClassName(received));
         }
     }
 
