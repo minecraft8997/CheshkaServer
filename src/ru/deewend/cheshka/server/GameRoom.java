@@ -19,13 +19,13 @@ public class GameRoom {
     private static final long TURN_WAITING_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(TURN_WAITING_TIMEOUT_SECONDS);
 
     private final Random random;
-    private ClientHandler hostPlayer;
+    ClientHandler hostPlayer;
     private boolean matchmaking = true;
     private String invitationCode;
     private final boolean hostColor; // true = white, false = black
     private Board board;
-    private volatile ClientHandler opponentPlayer;
-    private volatile ClientHandler whoseTurn;
+    volatile ClientHandler opponentPlayer;
+    volatile ClientHandler whoseTurn;
     private int waitingForOpponentTicks;
     private volatile boolean obsolete;
 
@@ -67,7 +67,7 @@ public class GameRoom {
             return !hostPlayer.isClosed();
         }
         if (board == null) {
-            board = new Board(random, CheshkaServer.BOARD_SIZE, TURN_WAITING_TIMEOUT_MILLIS);
+            board = new Board(this, random, CheshkaServer.BOARD_SIZE, TURN_WAITING_TIMEOUT_MILLIS);
 
             whoseTurn = (hostColor ? hostPlayer : opponentPlayer);
             sendOpponentFound(hostPlayer);
