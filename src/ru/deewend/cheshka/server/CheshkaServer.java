@@ -14,6 +14,7 @@ public class CheshkaServer {
     public static final int MAX_ONLINE_PLAYER_COUNT;
     public static final int MAX_ONLINE_PLAYER_COUNT_SOFT_KICK;
     public static final int MAX_IDLE_TIME_MILLIS;
+    public static final boolean USE_CAPTCHA;
     public static final boolean SHOW_PROPERTIES;
     public static final byte ACTION_ACCEPT = 0;
     public static final byte ACTION_ACCEPT_AND_CLOSE_LATER = 1;
@@ -36,6 +37,19 @@ public class CheshkaServer {
         MAX_ONLINE_PLAYER_COUNT_SOFT_KICK = Integer.parseInt(
                 Helper.getProperty("maxOnlinePlayerCountSoftKick", "2000"));
         int maxIdleTimeSeconds = Integer.parseInt(Helper.getProperty("maxIdleTimeSeconds", "1800"));
+        String captchaProperty = "useCaptcha";
+        USE_CAPTCHA = Boolean.parseBoolean(Helper.getProperty(captchaProperty, "false"));
+        if (!USE_CAPTCHA) {
+            /*
+             * I don't think it's worth logging to the disk.
+             */
+            System.out.println("---------------------------------------------------------------------------------");
+            System.out.println("Captcha challenge is disabled. If you wish to verify newcomers, download");
+            System.out.println("https://sourceforge.net/projects/simplecaptcha/files/simplecaptcha-1.2.1.jar,");
+            System.out.println("place the jarfile in the server's working directory and restart the server adding");
+            System.out.println("-D" + (PROPERTY_PREFIX + captchaProperty) + "=true to the startup command before the -jar flag");
+            System.out.println("---------------------------------------------------------------------------------");
+        }
 
         MAX_IDLE_TIME_MILLIS = (int) TimeUnit.SECONDS.toMillis(maxIdleTimeSeconds);
     }

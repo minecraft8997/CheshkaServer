@@ -168,7 +168,8 @@ public class ClientHandler implements Runnable {
             return;
         }
         UUID clientId = identification.clientId;
-        if (Helper.NULL_UUID_OBJ.equals(clientId) || !DB.getInstance().isUserVerified(clientId)) {
+        boolean noClientId = Helper.NULL_UUID_OBJ.equals(clientId);
+        if (CheshkaServer.USE_CAPTCHA && (noClientId || !DB.getInstance().isUserVerified(clientId))) {
             int attempts = 0;
             while (attempts++ < CAPTCHA_ATTEMPTS) {
                 Pair<BufferedImage, String> captcha = Helper.generateCaptcha();
@@ -191,6 +192,9 @@ public class ClientHandler implements Runnable {
             }
             clientId = UUID.randomUUID();
             DB.getInstance().saveVerified(clientId);
+        }
+        if (!CheshkaServer.USE_CAPTCHA && noClientId) {
+            clientId = UUID.randomUUID();
         }
         IdentificationResult result = new IdentificationResult();
         result.success = true;
