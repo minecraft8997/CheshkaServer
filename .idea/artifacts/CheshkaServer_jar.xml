@@ -5,6 +5,7 @@
       <element id="archive" name="CheshkaServer.jar">
         <element id="module-output" name="CheshkaServer" />
       </element>
+      <element id="library" level="project" name="simplecaptcha-1.2.1" />
     </root>
   </artifact>
 </component>

@@ -180,6 +180,9 @@ public class ClientHandler implements Runnable {
                 sendPacket(challengeRequired);
 
                 String answer = captcha.second();
+                //noinspection UnusedAssignment
+                captcha = null;
+                System.gc(); // give JVM a hint that it can free a pretty costly BufferedImage
 
                 receivePacket(ClientIdentification.class);
                 if (answer.equalsIgnoreCase(((ClientIdentification) received).captcha)) break;

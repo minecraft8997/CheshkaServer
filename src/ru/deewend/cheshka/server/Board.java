@@ -109,7 +109,7 @@ public class Board {
     public static final byte GAME_STATE_BLACK_WON = 2;
     public static final byte GAME_STATE_DRAW = 3;
 
-    private final GameRoom gameRoom;
+    private final Invertible listener;
     private final Random random;
     private final long turnWaitingTimeoutMillis;
     private final int diagonalLength;
@@ -129,12 +129,12 @@ public class Board {
     private boolean lastChance;
     private boolean lastChanceActivated;
 
-    public Board(GameRoom gameRoom, Random random, int boardSize, long turnWaitingTimeoutMillis) {
+    public Board(Invertible listener, Random random, int boardSize, long turnWaitingTimeoutMillis) {
         if (boardSize <= 0 || boardSize % 2 != 0) {
             throw new IllegalArgumentException("Bad boardSize");
         }
 
-        this.gameRoom = gameRoom;
+        this.listener = listener;
         this.random = random;
         this.turnWaitingTimeoutMillis = turnWaitingTimeoutMillis;
         diagonalLength = boardSize / 2;
@@ -385,11 +385,7 @@ public class Board {
             }
 
             whitesTurn = !whitesTurn;
-            if (gameRoom.whoseTurn == gameRoom.hostPlayer) {
-                gameRoom.whoseTurn = gameRoom.opponentPlayer;
-            } else {
-                gameRoom.whoseTurn = gameRoom.hostPlayer;
-            }
+            if (listener != null) listener.invert();
 
             if (lastChance) {
                 if (!lastChanceActivated) {

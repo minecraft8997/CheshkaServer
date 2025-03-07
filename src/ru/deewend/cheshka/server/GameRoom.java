@@ -7,7 +7,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-public class GameRoom {
+public class GameRoom implements Invertible {
     public static final int WAITING_FOR_OPPONENT_TIMEOUT_SECONDS =
             Integer.parseInt(Helper.getProperty("waitingForOpponentTimeoutSeconds", "900"));
     public static final int TURN_WAITING_TIMEOUT_SECONDS =
@@ -50,6 +50,15 @@ public class GameRoom {
             invitationCode = null;
         }
         this.hostColor = random.nextBoolean();
+    }
+
+    @Override
+    public void invert() {
+        if (whoseTurn == hostPlayer) {
+            whoseTurn = opponentPlayer;
+        } else {
+            whoseTurn = hostPlayer;
+        }
     }
 
     @SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter", "SynchronizeOnNonFinalField"})
