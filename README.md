@@ -20,16 +20,14 @@ Step 3. Import the project into IntelliJ IDEA;
 
 Step 4. Obtain [SimpleCaptcha 1.2.1](https://sourceforge.net/projects/simplecaptcha/files/simplecaptcha-1.2.1.jar) (or update [`MANIFEST.MF`](https://github.com/minecraft8997/CheshkaServer/blob/master/src/META-INF/MANIFEST.MF) if you are using any other version of the dependency);
 
-Step 4. Navigate to File -> Project Structure -> Libraries -> Click '+' sign -> Java (in New Project Library dialog) -> Select SimpleCaptcha's jarfile;
+Step 5. Navigate to File -> Project Structure -> Libraries -> Click '+' sign -> Java (in New Project Library dialog) -> Select SimpleCaptcha's jarfile;
 
-Step 4. Navigate to File -> Project Structure -> Artifacts -> Add -> JAR -> From modules with dependencies...
+Step 6. Navigate to File -> Project Structure -> Artifacts -> Add -> JAR -> From modules with dependencies...
 
-Step 5. Select the main class `ru.deewend.cheshka.server`;
+Step 7. Select the main class `ru.deewend.cheshka.server`;
 
-Step 5. Under "JAR files from libraries" section, click "copy to the output directory and link via manifest", click OK;
+Step 8. Under "JAR files from libraries" section, click "copy to the output directory and link via manifest", click OK;
 
-Step 6. Under Output Layout, press Apply;
+Step 9. Under Output Layout, press Apply;
 
-Step 7. Navigate to Build -> Build Artifacts... -> CheshkaServer:jar -> Build;
-
-Step 8. CheshkaServer's jarfile will be located in the `out/artifacts/CheshkaServer_jar` folder.
+Step 10. Navigate to Build -> Build Artifacts... -> CheshkaServer:jar -> Build. CheshkaServer's jarfile will be located in the `out/artifacts/CheshkaServer_jar` folder.
