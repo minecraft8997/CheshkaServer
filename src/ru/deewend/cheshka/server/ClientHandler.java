@@ -11,14 +11,18 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 
 import static ru.deewend.cheshka.server.Helper.getClassName;
 
 public class ClientHandler implements Runnable {
-    public static final int MAX_PACKET_COUNT_IN_QUEUE = 50;
+    public static final int MAX_PACKET_COUNT_IN_QUEUE = 24;
     public static final int CAPTCHA_ATTEMPTS = 10;
+    public static final int MAX_UNEXPECTED_PACKET_COUNT_IN_A_ROW = 5;
+    private static final Set<Class<? extends Packet>> HANDLED_BY_GAME_ROOM =
+            Set.of(CancelMatchmaking.class, RollDice.class, MakeMove.class, Resign.class);
 
     private final CheshkaServer cheshkaServer;
     private final Socket socket;
@@ -151,7 +155,7 @@ public class ClientHandler implements Runnable {
 
             return;
         }
-        if (clientHello.protocolVersion != 1) {
+        if (clientHello.protocolVersion != 1 && clientHello.protocolVersion != 2) {
             sendDisconnect("Unsupported protocol version. The server software is probably outdated");
 
             return;
@@ -219,18 +223,21 @@ public class ClientHandler implements Runnable {
 
         externalSendPacket(Helper.craftHomeData(cheshkaServer));
 
+        int unexpectedInARow = 0;
+        boolean incremented = false;
         while (true) {
+            if (!incremented) unexpectedInARow = 0;
+            incremented = false;
+
             receivePacket(null);
+            Class<?> clazz = received.getClass();
 
             if (gameRoom != null && gameRoom.isObsolete()) {
                 gameRoom = null;
 
                 clearQueue();
             }
-            boolean resign = (received instanceof Resign);
-            if (gameRoom != null && !matchmaking &&
-                    (received instanceof RollDice || received instanceof MakeMove || resign)
-            ) {
+            if (gameRoom != null && !matchmaking && HANDLED_BY_GAME_ROOM.contains(clazz)) {
                 queueCurrentPacket();
 
                 continue;
@@ -261,17 +268,21 @@ public class ClientHandler implements Runnable {
 
                 continue;
             }
-            if (resign) continue;
+            if (++unexpectedInARow >= MAX_UNEXPECTED_PACKET_COUNT_IN_A_ROW) {
+                sendDisconnect("Too many unexpected packets, the last one was " + clazz.getSimpleName());
 
-            sendDisconnect("Unexpected packet: " + received.getClass().getName());
+                break;
+            }
 
-            break;
+            incremented = true;
         }
     }
 
     private synchronized void queueCurrentPacket() {
+        if (!(received instanceof MakeMove) && Helper.findPacket(this, received.getClass()) != null) return;
+
         if (gameRoomPacketQueue.size() >= MAX_PACKET_COUNT_IN_QUEUE) {
-            disconnectAsync("Too many packets");
+            disconnectAsync("Too many queued packets");
 
             return;
         }

@@ -20,6 +20,7 @@ public abstract class Packet {
         serverboundPIDMappings[0x01] = ClientIdentification.class;
         serverboundPIDMappings[0x02] = InitiateMatchmaking.class;
         serverboundPIDMappings[0x03] = RollDice.class;
+        serverboundPIDMappings[0x04] = CancelMatchmaking.class;
         serverboundPIDMappings[0x06] = MakeMove.class;
         serverboundPIDMappings[0x07] = Resign.class;
 

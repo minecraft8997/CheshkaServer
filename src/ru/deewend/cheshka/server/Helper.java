@@ -141,6 +141,17 @@ public class Helper {
         return annotatedOnly;
     }
 
+    @SuppressWarnings({"unchecked", "SynchronizationOnLocalVariableOrMethodParameter"})
+    public static <T extends Packet> T findPacket(ClientHandler handler, Class<T> clazz) {
+        synchronized (handler) {
+            for (Packet packet : handler.gameRoomPacketQueue) {
+                if (clazz.isInstance(packet)) return (T) packet;
+            }
+        }
+
+        return null;
+    }
+
     public static String getClassName(Object object) {
         Class<?> clazz;
         if (object instanceof Class) {

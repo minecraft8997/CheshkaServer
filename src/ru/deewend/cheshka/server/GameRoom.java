@@ -61,10 +61,11 @@ public class GameRoom implements Invertible {
         }
     }
 
-    @SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter", "SynchronizeOnNonFinalField"})
+    @SuppressWarnings("SynchronizeOnNonFinalField")
     public boolean tick() {
         if (matchmaking) {
-            if (++waitingForOpponentTicks >= WAITING_FOR_OPPONENT_TIMEOUT_TICKS) {
+            boolean timeout = (++waitingForOpponentTicks >= WAITING_FOR_OPPONENT_TIMEOUT_TICKS);
+            if (timeout || Helper.findPacket(hostPlayer, CancelMatchmaking.class) != null) {
                 hostPlayer.externalSendPacket(new OpponentNotFound());
 
                 return false;
@@ -107,14 +108,9 @@ public class GameRoom implements Invertible {
             }
         }
         ClientHandler currentOpponent = (hostPlayersTurn ? opponentPlayer : hostPlayer);
-        synchronized (currentOpponent) {
-            for (Packet packet : currentOpponent.gameRoomPacketQueue) {
-                if (packet instanceof Resign) {
-                    resign((Resign) packet, !whitesTurn);
-
-                    break;
-                }
-            }
+        Resign resign;
+        if ((resign = Helper.findPacket(currentOpponent, Resign.class)) != null) {
+            resign(resign, !whitesTurn);
         }
         sendBothAsyncIfNonNull(board.checkTimeout());
 
