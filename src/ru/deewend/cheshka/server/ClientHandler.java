@@ -155,8 +155,12 @@ public class ClientHandler implements Runnable {
 
             return;
         }
-        if (clientHello.protocolVersion != 1 && clientHello.protocolVersion != 2) {
-            sendDisconnect("Unsupported protocol version. The server software is probably outdated");
+        if (clientHello.protocolVersion != Helper.SERVER_VERSION_CODE) {
+            boolean less = (clientHello.protocolVersion < Helper.SERVER_VERSION_CODE);
+            String message;
+            if (less) message = "Outdated client, please update to 1.0.2b";
+            else      message = "Outdated server, only 1.0.2b client is supported";
+            sendDisconnect(message);
 
             return;
         }

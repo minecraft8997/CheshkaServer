@@ -172,6 +172,7 @@ public class GameRoom implements Invertible {
         opponentFound.opponentPiecePositions = board.serializePosition(!myColor);
         opponentFound.whiteColor = myColor;
         opponentFound.myTurnNow = (handler == whoseTurn);
+        opponentFound.lastChanceActivated = board.isLastChanceActivated();
 
         handler.externalSendPacket(opponentFound);
 

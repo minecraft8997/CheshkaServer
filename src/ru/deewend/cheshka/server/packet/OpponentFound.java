@@ -17,6 +17,7 @@ public class OpponentFound extends Packet {
     @Order(no = 8) public String opponentPiecePositions;
     @Order(no = 9) public boolean whiteColor;
     @Order(no = 10) public boolean myTurnNow;
+    @Order(no = 11) public boolean lastChanceActivated;
 
     @Override
     public int getId() {

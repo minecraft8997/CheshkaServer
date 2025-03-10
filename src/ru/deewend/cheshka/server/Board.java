@@ -52,7 +52,7 @@ public class Board {
         public void makeMove() {
             Piece target = null;
             for (Piece piece : pieces) {
-                if (piece.position == destination) {
+                if (piece.position == destination || (piece.position == whitesDiagonalStart && destination == 0)) {
                     target = piece;
 
                     break;
@@ -232,7 +232,9 @@ public class Board {
             lastCalculatedDestination = newPosition;
 
             for (Piece aPiece : pieces) {
-                if (aPiece.position == newPosition || (newPosition == whitesDiagonalStart && aPiece.position == 0)) {
+                boolean guestOnWhiteSide = (newPosition == whitesDiagonalStart && aPiece.position == 0);
+                boolean waitingWhitePiece = (newPosition == 0 && aPiece.position == whitesDiagonalStart);
+                if (aPiece.position == newPosition || guestOnWhiteSide || waitingWhitePiece) {
                     if (i != digit) return false;
 
                     return aPiece.whitePiece != whitesTurn;
@@ -293,9 +295,7 @@ public class Board {
             }
             case MakeMove.MOVE_TYPE_SPAWNING: {
                 for (PossibleMove move : possibleMoves) {
-                    if (move.isSpawningMove() && move.destination == packet.piecePosition) {
-                        return makeMove(move, false);
-                    }
+                    if (move.isSpawningMove()) return makeMove(move, false);
                 }
 
                 return null;
@@ -419,6 +419,8 @@ public class Board {
     }
 
     public void resign(boolean white) {
+        if (gameState != GAME_STATE_RUNNING && !resigned) return;
+
         if (resigned) {
             gameState = GAME_STATE_DRAW; // both players resigned nearly at the same moment
 
@@ -442,5 +444,9 @@ public class Board {
 
     public Integer getLastDiceRollResult() {
         return (lastDiceRollResult != null ? lastDiceRollResult.first() : null);
+    }
+
+    public boolean isLastChanceActivated() {
+        return lastChanceActivated;
     }
 }

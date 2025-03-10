@@ -25,7 +25,7 @@ public class Helper {
         void provide(T object) throws Exception;
     }
 
-    public static final int SERVER_VERSION_CODE = 1;
+    public static final int SERVER_VERSION_CODE = 3;
     public static final String DEFAULT_STRING_VALUE = "";
     public static final String NULL_UUID = "00000000-0000-0000-0000-000000000000";
     public static final UUID NULL_UUID_OBJ = UUID.fromString(NULL_UUID);
