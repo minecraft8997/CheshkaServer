@@ -18,6 +18,8 @@ public class OpponentFound extends Packet {
     @Order(no = 9) public boolean whiteColor;
     @Order(no = 10) public boolean myTurnNow;
     @Order(no = 11) public boolean lastChanceActivated;
+    @Order(no = 12) public long ageMillis;
+    @Order(no = 13) public long reserved;
 
     @Override
     public int getId() {

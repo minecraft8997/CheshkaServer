@@ -1,13 +1,9 @@
 package ru.deewend.cheshka.server;
 
-import nl.captcha.Captcha;
-import nl.captcha.backgrounds.FlatColorBackgroundProducer;
-import nl.captcha.text.renderer.DefaultWordRenderer;
 import ru.deewend.cheshka.server.annotation.Order;
 import ru.deewend.cheshka.server.packet.HomeData;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Field;
@@ -16,8 +12,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 public class Helper {
@@ -25,7 +24,7 @@ public class Helper {
         void provide(T object) throws Exception;
     }
 
-    public static final int SERVER_VERSION_CODE = 3;
+    public static final int SERVER_VERSION_CODE = 4;
     public static final String DEFAULT_STRING_VALUE = "";
     public static final String NULL_UUID = "00000000-0000-0000-0000-000000000000";
     public static final UUID NULL_UUID_OBJ = UUID.fromString(NULL_UUID);
@@ -239,5 +238,11 @@ public class Helper {
             socket.close();
         } catch (IOException ignored) {
         }
+    }
+
+    public static String listToString(List<?> list) {
+        if (list == null) list = Collections.EMPTY_LIST;
+
+        return "[" + list.stream().map(Object::toString).collect(Collectors.joining(", ")) + "]";
     }
 }

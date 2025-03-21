@@ -35,6 +35,15 @@ public class Board {
         public boolean hasRevertedPosition() {
             return revertedPosition;
         }
+
+        @Override
+        public String toString() {
+            return "Piece{" +
+                    "whitePiece=" + whitePiece +
+                    ", position=" + position +
+                    ", revertedPosition=" + revertedPosition +
+                    '}';
+        }
     }
 
     @SuppressWarnings("unused")
@@ -50,15 +59,21 @@ public class Board {
         }
 
         public void makeMove() {
-            Piece target = null;
+            List<Piece> targets = new ArrayList<>();
             for (Piece piece : pieces) {
-                if (piece.position == destination || (piece.position == whitesDiagonalStart && destination == 0)) {
-                    target = piece;
-
-                    break;
+                boolean guestOnWhiteSide = (piece.position == 0 && destination == whitesDiagonalStart);
+                boolean waitingWhitePiece = (piece.position == whitesDiagonalStart && destination == 0);
+                if (piece.position == destination || waitingWhitePiece || guestOnWhiteSide) {
+                    targets.add(piece);
                 }
             }
-            if (target != null) pieces.remove(target);
+            if (!targets.isEmpty()) {
+                if (targets.size() > 1) {
+                    Log.w("Too many \"targets\". Please report this issue to deewend", new Exception());
+                    Log.w("Include the board state: " + Board.super.toString());
+                }
+                pieces.removeAll(targets);
+            }
 
             if (isSpawningMove()) {
                 Piece piece = new Piece(whitesTurn);
@@ -84,6 +99,14 @@ public class Board {
 
         public int getDestination() {
             return destination;
+        }
+
+        @Override
+        public String toString() {
+            return "PossibleMove{" +
+                    "piece=" + piece +
+                    ", destination=" + destination +
+                    '}';
         }
     }
 
@@ -128,6 +151,7 @@ public class Board {
     private boolean resigned;
     private boolean lastChance;
     private boolean lastChanceActivated;
+    private final long creationTimestamp;
 
     public Board(Invertible listener, Random random, int boardSize, long turnWaitingTimeoutMillis) {
         if (boardSize <= 0 || boardSize % 2 != 0) {
@@ -141,6 +165,7 @@ public class Board {
         whitesDiagonalStart = (boardSize - 1) * 4;
         blacksSpawnPosition = whitesDiagonalStart / 2;
         blacksDiagonalStartPlusOne = whitesDiagonalStart + diagonalLength;
+        creationTimestamp = System.currentTimeMillis();
     }
 
     public String serializePosition(boolean white) {
@@ -448,5 +473,40 @@ public class Board {
 
     public boolean isLastChanceActivated() {
         return lastChanceActivated;
+    }
+
+    public long getAgeMillis() {
+        return Math.max(System.currentTimeMillis() - creationTimestamp, 0L);
+    }
+
+    @Override
+    public String toString() {
+        String result = "Board{" +
+                ", turnWaitingTimeoutMillis=" + turnWaitingTimeoutMillis +
+                ", noMoveDrawThreshold=" + NO_MOVE_DRAW_THRESHOLD +
+                ", diagonalLength=" + diagonalLength +
+                ", whitesDiagonalStart=" + whitesDiagonalStart +
+                ", blacksSpawnPosition=" + blacksSpawnPosition +
+                ", blacksDiagonalStartPlusOne=" + blacksDiagonalStartPlusOne +
+                ", pieces=" + Helper.listToString(pieces) +
+                ", moveNumber=" + moveNumber +
+                ", subMoveNumber=" + subMoveNumber +
+                ", whitesTurn=" + whitesTurn +
+                ", lastCalculatedDestination=" + lastCalculatedDestination;
+        if (lastDiceRollResult != null) {
+            result += ", lastDiceRollResult.first=" + lastDiceRollResult.first() +
+                    ", lastDiceRollResult.second=" + Helper.listToString(lastDiceRollResult.second());
+        } else {
+            result += ", lastDiceRollResult=null";
+        }
+        result += ", noMovesCounter=" + noMovesCounter +
+                ", lastActionTimestamp=" + lastActionTimestamp +
+                ", gameState=" + gameState +
+                ", resigned=" + resigned +
+                ", lastChance=" + lastChance +
+                ", lastChanceActivated=" + lastChanceActivated +
+                '}';
+
+        return result;
     }
 }
