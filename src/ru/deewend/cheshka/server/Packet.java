@@ -15,14 +15,14 @@ public abstract class Packet {
     private static final Class[] serverboundPIDMappings;
 
     static {
-        serverboundPIDMappings = new Class[8];
+        serverboundPIDMappings = new Class[10];
         serverboundPIDMappings[0x00] = ClientHello.class;
         serverboundPIDMappings[0x01] = ClientIdentification.class;
         serverboundPIDMappings[0x02] = InitiateMatchmaking.class;
         serverboundPIDMappings[0x03] = RollDice.class;
         serverboundPIDMappings[0x04] = CancelMatchmaking.class;
         serverboundPIDMappings[0x06] = MakeMove.class;
-        serverboundPIDMappings[0x07] = Resign.class;
+        serverboundPIDMappings[0x09] = Resign.class;
 
         for (Class<?> clazz : serverboundPIDMappings) {
             if (clazz == null) continue;
@@ -71,6 +71,8 @@ public abstract class Packet {
                 field.set(packet, stream.readBoolean());
             } else if (type == int.class) {
                 field.set(packet, stream.readInt());
+            } else if (type == long.class) {
+                field.set(packet, stream.readLong());
             } else if (type == UUID.class) {
                 long most = stream.readLong();
                 long least = stream.readLong();
@@ -108,6 +110,8 @@ public abstract class Packet {
                     stream.writeBoolean(field.getBoolean(this));
                 } else if (type == int.class) {
                     stream.writeInt(field.getInt(this));
+                } else if (type == long.class) {
+                    stream.writeLong(field.getLong(this));
                 } else if (type == UUID.class) {
                     UUID uuid = (UUID) field.get(this);
                     if (uuid == null) uuid = Helper.NULL_UUID_OBJ;

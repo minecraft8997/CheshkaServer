@@ -238,10 +238,11 @@ public class ClientHandler implements Runnable {
 
             if (gameRoom != null && gameRoom.isObsolete()) {
                 gameRoom = null;
+                matchmaking = false;
 
                 clearQueue();
             }
-            if (gameRoom != null && !matchmaking && HANDLED_BY_GAME_ROOM.contains(clazz)) {
+            if (gameRoom != null && HANDLED_BY_GAME_ROOM.contains(clazz)) {
                 queueCurrentPacket();
 
                 continue;

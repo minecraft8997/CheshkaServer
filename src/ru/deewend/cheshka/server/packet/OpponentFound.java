@@ -6,6 +6,7 @@ import ru.deewend.cheshka.server.annotation.Clientbound;
 import ru.deewend.cheshka.server.annotation.Order;
 
 @Clientbound
+@SuppressWarnings("unused")
 public class OpponentFound extends Packet {
     @Order(no = 1) public String opponentDisplayName;
     @Order(no = 2) public int boardSize;
