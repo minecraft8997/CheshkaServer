@@ -59,21 +59,8 @@ public class Board {
         }
 
         public void makeMove() {
-            List<Piece> targets = new ArrayList<>();
-            for (Piece piece : pieces) {
-                boolean guestOnWhiteSide = (piece.position == 0 && destination == whitesDiagonalStart);
-                boolean waitingWhitePiece = (piece.position == whitesDiagonalStart && destination == 0);
-                if (piece.position == destination || waitingWhitePiece || guestOnWhiteSide) {
-                    targets.add(piece);
-                }
-            }
-            if (!targets.isEmpty()) {
-                if (targets.size() > 1) {
-                    Log.w("Too many \"targets\". Please report this issue to deewend", new Exception());
-                    Log.w("Include the board state: " + Board.super.toString());
-                }
-                pieces.removeAll(targets);
-            }
+            Piece target = getTarget();
+            if (target != null) pieces.remove(target);
 
             if (isSpawningMove()) {
                 Piece piece = new Piece(whitesTurn);
@@ -83,6 +70,21 @@ public class Board {
             } else {
                 piece.setPosition(destination);
             }
+        }
+
+        public Piece getTarget() {
+            Piece target = null;
+            for (Piece piece : pieces) {
+                boolean guestOnWhiteSide = (piece.position == 0 && destination == whitesDiagonalStart);
+                boolean waitingWhitePiece = (piece.position == whitesDiagonalStart && destination == 0);
+                if (piece.position == destination || waitingWhitePiece || guestOnWhiteSide) {
+                    target = piece;
+
+                    break;
+                }
+            }
+
+            return target;
         }
 
         public byte getMoveType() {
