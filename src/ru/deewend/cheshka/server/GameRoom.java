@@ -84,7 +84,7 @@ public class GameRoom implements Invertible {
             sendOpponentFound(opponentPlayer);
 
             Log.i("A game between " +
-                    hostPlayer.getUsername() + " and " + opponentPlayer.getUsername() + " was started");
+                    hostPlayer.getUsername() + " and " + opponentPlayer.getUsername() + " has started");
         }
         hostPlayer.gameRoom = this;
         hostPlayer.matchmaking = false;
