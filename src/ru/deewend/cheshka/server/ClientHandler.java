@@ -158,8 +158,8 @@ public class ClientHandler implements Runnable {
         if (clientHello.protocolVersion != Helper.SERVER_VERSION_CODE) {
             boolean less = (clientHello.protocolVersion < Helper.SERVER_VERSION_CODE);
             String message;
-            if (less) message = "Outdated client, please update to 1.1d";
-            else      message = "Outdated server, only 1.1d client is supported";
+            if (less) message = "Outdated client, please update to 1.1.1";
+            else      message = "Outdated server, only 1.1d, 1.1d_2, 1.1 and 1.1.1 clients are supported";
             sendDisconnect(message);
 
             return;
