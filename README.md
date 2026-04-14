@@ -24,7 +24,7 @@ Step 5. Navigate to File -> Project Structure -> Libraries -> Click '+' sign -> 
 
 Step 6. Navigate to File -> Project Structure -> Artifacts -> Add -> JAR -> From modules with dependencies...
 
-Step 7. Select the main class `ru.deewend.cheshka.server`;
+Step 7. Select the main class `com.deewend.cheshka.server`;
 
 Step 8. Under "JAR files from libraries" section, click "copy to the output directory and link via manifest", click OK;
 

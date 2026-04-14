@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
-Main-Class: ru.deewend.cheshka.server.CheshkaServer
+Main-Class: com.deewend.cheshka.server.CheshkaServer
 Class-Path: simplecaptcha-1.2.1.jar
 
