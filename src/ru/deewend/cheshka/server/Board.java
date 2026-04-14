@@ -247,6 +247,9 @@ public class Board {
             if (oldPosition == whitesDiagonalStart - 1 && !whitesTurn) {
                 newPosition = 0;
             } else if (!whitesTurn && oldPosition == getSpawnPosition() && piece.revertedPosition) {
+                // blacksDiagonalStartPlusOne refers to a non-existent cell in a 2x2 board
+                if (diagonalLength == 1) return false;
+
                 newPosition = blacksDiagonalStartPlusOne;
             } else if (whitesTurn && oldPosition == whitesDiagonalStart + diagonalLength - 1) {
                 return false;
