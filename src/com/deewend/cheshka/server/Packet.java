@@ -129,7 +129,7 @@ public abstract class Packet {
                         throw new NullPointerException("Null BufferedImage in a clientbound packet, id is " + packetId);
                     }
 
-                    Helper.writeBufferedImage(stream, image);
+                    Helper.writeSimpleBitmap(stream, image);
                 } else {
                     throw new ReflectiveOperationException("Unsupported packet field type: " + type);
                 }

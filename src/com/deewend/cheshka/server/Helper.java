@@ -3,7 +3,6 @@ package com.deewend.cheshka.server;
 import com.deewend.cheshka.server.annotation.Order;
 import com.deewend.cheshka.server.packet.HomeData;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.lang.reflect.Field;
@@ -118,11 +117,11 @@ public class Helper {
         writeByteArray(stream, contents);
     }
 
-    public static void writeBufferedImage(DataOutputStream stream, BufferedImage image) throws IOException {
-        ByteArrayOutputStream stream0 = new ByteArrayOutputStream(MAX_FIELD_SIZE / 2);
-        ImageIO.write(image, "png", stream0);
+    public static void writeSimpleBitmap(DataOutputStream stream, BufferedImage image) throws IOException {
+        byte[] result = SimpleBitmapEncoder.encode(image);
+        if (result == null) throw new IllegalArgumentException("Not a 480x320 image");
 
-        writeByteArray(stream, stream0.toByteArray());
+        writeByteArray(stream, result);
     }
 
     public static List<Field> fixOrder(Field[] fields) {
