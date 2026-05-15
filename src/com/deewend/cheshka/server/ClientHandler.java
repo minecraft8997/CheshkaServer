@@ -56,6 +56,11 @@ public class ClientHandler implements Runnable {
             run0();
         } catch (Throwable th) {
             t = th;
+            String message = t.getMessage();
+            if (message != null && message.contains("font")) {
+                Log.w("Failed to generate a captcha, " +
+                        "you may need to install fontconfig and fonts-dejavu (ttf-dejavu)", t);
+            }
         } finally {
             cheshkaServer.accessAuthenticatedUsers(authenticatedUsers -> authenticatedUsers.remove(this));
 
